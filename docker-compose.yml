@@ -7,8 +7,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: django_web
+    depends_on:
+      - db
+    # Only make projects and apps accessible in container runtime environment
     volumes:
-      - ./:/usr/src/app
+      - ./config:/usr/src/app/config
+      - ./greetings://usr/src/app/greetings
     networks:
       - app_network
     ports:
