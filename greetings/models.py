@@ -17,7 +17,7 @@ class Greeting(models.Model):
     Represents a custom greeting from a user.
     """
 
-    greeting_id = models.UUIDField(primary_key=True, default=uuid.uuid5, editable=False)
+    greeting_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     greeting_text = models.CharField(unique=True, blank=False, max_length=50)
     greeting_created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
