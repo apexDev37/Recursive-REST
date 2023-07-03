@@ -1,3 +1,39 @@
-from django.shortcuts import render
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
-# Create your views here.
+from greetings.models import Greeting
+from greetings.serializers import GreetingSerializer
+
+
+@api_view(["GET"])
+def list_greetings(request):
+    """List all the greetings from the db."""
+
+    if request.method == "GET":
+        greetings = Greeting.objects.all()
+        serializer = GreetingSerializer(greetings, many=True)
+        return Response(serializer.data)
+
+    return Response(serializer.errors)
+
+
+@api_view(["POST"])
+def save_custom_greeting(request):
+    """Save a custom greeting from a user."""
+
+    if request.method == "POST":
+        custom_greeting = request.GET.get("greeting")
+        print(custom_greeting)
+
+        if custom_greeting:
+            greeting = Greeting(greeting_text=custom_greeting)
+            greeting.save()
+            return Response(
+                {"message": "Greeting saved"}, status=status.HTTP_201_CREATED
+            )
+        return Response(
+            {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
