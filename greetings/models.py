@@ -1,5 +1,6 @@
 import uuid
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
 """
@@ -23,3 +24,9 @@ class Greeting(models.Model):
 
     class Meta:
         ordering = ["greeting_created_at"]
+
+    def save(self, *args, **kwargs):
+        if not self.greeting_text.strip():
+            raise ValidationError("greeting_text field cannot be null or blank.")
+
+        super().save(*args, **kwargs)
