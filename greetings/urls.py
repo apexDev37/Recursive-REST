@@ -1,10 +1,11 @@
 from django.urls import path
 
+from config.settings.base import API_VERSION
 from greetings import views
 
-API_VERSION = "api/v1/"
+api_version: str = API_VERSION.GREETINGS
 
 urlpatterns = [
-    path(f"{API_VERSION}greetings/", views.list_greetings),
-    path(f"{API_VERSION}greeting/", views.save_custom_greeting),
+    path(f"{api_version}greetings/", views.list_greetings),
+    path(f"{api_version}greeting/", views.save_custom_greeting),
 ]
