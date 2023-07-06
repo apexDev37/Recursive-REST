@@ -1,12 +1,13 @@
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.test.client import Client
 from rest_framework import status
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 
 from greetings.models import Greeting
+from greetings.views import save_custom_greeting
 
 # Constant String Literals
 GREETING_ENDPOINT = "/greetings/api/v1/greeting/"
@@ -86,3 +87,20 @@ class GreetingViewRequestTestCase(TestCase):
         self.assertContains(
             response, status_code=status.HTTP_201_CREATED, text="Greeting saved"
         )
+
+class GreetingsViewLogicTestCase(TestCase):
+  """ Test case to test view logic, behavior, and error handling. """
+  
+  def setUp(self) -> None:
+    self.factory = RequestFactory()
+  
+  def test_should_raise_custom_exception_for_absent_query_param_in_url(self) -> None:
+    """ Given the absence of a query_param in the url, on a post, raise an exception. """
+
+    # Given
+    request_without_param = self.factory.post(GREETING_ENDPOINT)
+
+    # Then
+    with self.assertRaises(ValueError):
+      save_custom_greeting(request_without_param)
+  
