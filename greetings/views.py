@@ -22,18 +22,20 @@ def list_greetings(request):
 def save_custom_greeting(request):
     """Save a custom greeting from a user."""
 
-    if request.method == "POST":
-        custom_greeting = request.GET.get("greeting")
-        print(custom_greeting)
+    greeting_query_param = '?greeting='
+    url_path = request.META.get("PATH_INFO")
+    print(url_path)
+    if greeting_query_param not in url_path:
+      raise ValueError("Greeting query param is missing.")
 
-        if custom_greeting:
-            greeting = Greeting(greeting_text=custom_greeting)
-            greeting.save()
-            return Response(
-                {"message": "Greeting saved"}, status=status.HTTP_201_CREATED
-            )
+    custom_greeting = request.GET.get("greeting")
+
+    if custom_greeting:
+        greeting = Greeting(greeting_text=custom_greeting)
+        greeting.save()
         return Response(
-            {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST
+            {"message": "Greeting saved"}, status=status.HTTP_201_CREATED
         )
-
-    return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    return Response(
+        {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST
+    )
