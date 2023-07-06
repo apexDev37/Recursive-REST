@@ -1,13 +1,14 @@
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.request import Request
 
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
 
 
 @api_view(["GET"])
-def list_greetings(request):
+def list_greetings(request: Request) -> Response:
     """List all the greetings from the db."""
 
     if request.method == "GET":
@@ -19,7 +20,7 @@ def list_greetings(request):
 
 
 @api_view(["POST"])
-def save_custom_greeting(request):
+def save_custom_greeting(request: Request) -> Response:
     """Save a custom greeting from a user."""
 
     if not is_query_param_present(request=request):
@@ -37,7 +38,7 @@ def save_custom_greeting(request):
         {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST
     )
 
-def is_query_param_present(request) -> bool:
+def is_query_param_present(request: Request) -> bool:
   query_param = '?greeting='
   url_path = request.META.get("PATH_INFO")
   return query_param in url_path
