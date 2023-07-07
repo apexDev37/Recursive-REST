@@ -23,10 +23,8 @@ def list_greetings(request: Request) -> Response:
 def save_custom_greeting(request: Request) -> Response:
     """Save a custom greeting from a user."""
 
-    if not is_query_param_present(request=request):
-      raise ValueError("Greeting query param is missing.")
-
-    custom_greeting = request.GET.get("greeting")
+    GreetingPathValidator.validate_query_param_present(request)
+    custom_greeting = request.query_params['greeting']
 
     if custom_greeting:
         greeting = Greeting(greeting_text=custom_greeting)
@@ -38,7 +36,10 @@ def save_custom_greeting(request: Request) -> Response:
         {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST
     )
 
-def is_query_param_present(request: Request) -> bool:
-  query_param = '?greeting='
-  url_path = request.META.get("PATH_INFO")
-  return query_param in url_path
+class GreetingPathValidator:
+  @staticmethod
+  def validate_query_param_present(request: Request) -> None:
+    query_param_key = '?greeting='
+    url_path = request.build_absolute_uri()
+    if query_param_key not in url_path:
+      raise ValueError("Greeting query param key is missing.")
