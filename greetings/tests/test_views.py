@@ -11,7 +11,7 @@ from greetings.views import save_custom_greeting
 
 # Constant String Literals
 GREETING_ENDPOINT = "/greetings/api/v1/greeting/"
-GREETING_PARAM = "?greeting={}"
+GREETING_PARAM = "?greeting="
 
 GREETING_URI = GREETING_ENDPOINT + GREETING_PARAM
 
@@ -75,7 +75,7 @@ class GreetingViewRequestTestCase(TestCase):
         valid_query_param = "hey, am not blank or null"
 
         # When
-        response = self.client.post(path=GREETING_URI.format(valid_query_param))
+        response = self.client.post(path=(GREETING_URI + valid_query_param))
 
         # Then
         self.assertIsInstance(response, Response)
@@ -104,3 +104,13 @@ class GreetingsViewLogicTestCase(TestCase):
     with self.assertRaises(ValueError):
       save_custom_greeting(request_without_param)
   
+  def test_should_not_raise_custom_exception_for_query_param_key_in_url(self) -> None:
+    """ Given a present query_param key in the url, on a post, don't raise an exception. """
+
+    # Given
+    request_with_param_key = self.factory.post(GREETING_ENDPOINT + GREETING_PARAM)
+
+    try:
+      save_custom_greeting(request_with_param_key)
+    except:
+      self.failIf(ValueError, msg="Exception should NOT be raised, query param key is present.")
