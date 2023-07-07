@@ -85,6 +85,8 @@ docs/_build/
 # PyBuilder
 target/
 
+# mypy: static typing
+.mypy_cache
 
 ### Django ###
 *.log
