@@ -4,12 +4,7 @@ from rest_framework import status
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 
-# Constant String Literals
-GREETING_ENDPOINT = "/greetings/api/v1/greeting/"
-GREETING_PARAM = "?greeting="
-
-GREETING_URI = GREETING_ENDPOINT + GREETING_PARAM
-
+from greetings.utils.constants import GreetingsPathConstants as path
 
 class GreetingViewRequestTestCase(TestCase):
     """Tests for the Greeting view request, routing and response behavior"""
@@ -28,10 +23,10 @@ class GreetingViewRequestTestCase(TestCase):
         """Given no query param is provided, on a post request, return a 400 response."""
 
         # Given
-        url_without_param = "/greetings/api/v1/greeting/"
+        url = str(path.GREETING_ENDPOINT)
 
         # When
-        response = self.client.post(path=url_without_param)
+        response = self.client.post(path=url)
 
         # Then
         self.assertIsInstance(response, Response)
@@ -50,9 +45,10 @@ class GreetingViewRequestTestCase(TestCase):
 
         # Given
         not_allowed = "PUT"
+        url = str(path.GREETING_URI)
 
         # When
-        response = self.client.generic(method=not_allowed, path=GREETING_ENDPOINT)
+        response = self.client.generic(method=not_allowed, path=url)
         error_detail = response.data["detail"]
 
         # Then
@@ -67,15 +63,16 @@ class GreetingViewRequestTestCase(TestCase):
         """Given a valid query param, on a post request, return a 201 response."""
 
         # Given
-        valid_query_param = "hey, am not blank or null"
+        value = "hey, am not blank or null"
+        url = str(path.GREETING_URI) + value
 
         # When
-        response = self.client.post(path=(GREETING_URI + valid_query_param))
+        response = self.client.post(path=url)
 
         # Then
         self.assertIsInstance(response, Response)
-        self.assertIsNotNone(valid_query_param)
-        self.assertIsNot(valid_query_param, "")
+        self.assertIsNotNone(value)
+        self.assertIsNot(value, "")
         self.assertContains(
             response, status_code=status.HTTP_201_CREATED, text="message"
         )

@@ -1,11 +1,7 @@
 from django.test import RequestFactory, TestCase
 
 from greetings.views import save_custom_greeting
-
-# Constant String Literals
-GREETING_ENDPOINT = "/greetings/api/v1/greeting/"
-GREETING_PARAM = "?greeting="
-GREETING_URI = GREETING_ENDPOINT + GREETING_PARAM
+from greetings.utils.constants import GreetingsPathConstants as path
 
 class GreetingsExceptionsTestCase(TestCase):
   """
@@ -17,7 +13,8 @@ class GreetingsExceptionsTestCase(TestCase):
   
   def test_should_raise_exception_for_absent_query_param_key_in_request_url(self) -> None:
     # Given
-    request = self.factory.post(GREETING_ENDPOINT)
+    url = str(path.GREETING_ENDPOINT)
+    request = self.factory.post(url)
 
     # Then
     with self.assertRaises(ValueError):
@@ -26,7 +23,8 @@ class GreetingsExceptionsTestCase(TestCase):
   def test_should_raise_exception_when_query_param_value_is_blank_or_none(self) -> None:
     # Given
     value = ''    
-    request = self.factory.post(GREETING_URI + value)
+    url = str(path.GREETING_URI) + value
+    request = self.factory.post(url)
     
     # Then
     with self.assertRaisesMessage(
@@ -37,7 +35,8 @@ class GreetingsExceptionsTestCase(TestCase):
   def test_should_raise_exception_if_query_param_value_has_non_alphabetical_chars(self) -> None:
     # Given
     value = '_greeting@37'
-    request = self.factory.post(GREETING_URI + value)
+    url = str(path.GREETING_URI) + value
+    request = self.factory.post(url)
     
     # Then
     self.assertIsInstance(value, str)
