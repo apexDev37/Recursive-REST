@@ -23,22 +23,27 @@ def list_greetings(request: Request) -> Response:
 
 @api_view(["POST"])
 def save_custom_greeting(request: Request) -> Response:
-    """Save a custom greeting from a user."""
+  """Save a custom greeting from a user."""
 
-    GreetingPathValidator.validate_query_param_present(request)
-    custom_greeting = request.query_params['greeting']
-    GreetingParamValidator.validate_not_blank(custom_greeting)
-    GreetingValueValidator.validate_query_param_value(custom_greeting)
-
-    if custom_greeting:
-        greeting = Greeting(greeting_text=custom_greeting)
-        greeting.save()
-        return Response(
-            {"message": "Greeting saved"}, status=status.HTTP_201_CREATED
-        )
+  custom_greeting = validate_query_param(request)
+  
+  try:    
+    greeting = Greeting(greeting_text=custom_greeting)
+    greeting.save()
     return Response(
-        {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST
-    )
+      {"message": "Greeting saved"}, status=status.HTTP_201_CREATED)
+
+  except Exception:
+    return Response(
+      {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def validate_query_param(request: Request) -> str:
+  GreetingPathValidator.validate_query_param_present(request)
+  custom_greeting = request.query_params['greeting']
+  GreetingParamValidator.validate_not_blank(custom_greeting)
+  GreetingValueValidator.validate_query_param_value(custom_greeting)
+  return custom_greeting
 
 class GreetingPathValidator:
   @staticmethod
