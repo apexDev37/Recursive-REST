@@ -2,12 +2,13 @@ import re
 
 from rest_framework.request import Request
 
+from greetings.utils.constants import GreetingsPathConstants as path 
+
 class GreetingPathValidator:
   @staticmethod
   def validate_param_key_present(request: Request) -> None:
-    query_param_key = '?greeting='
     url_path = request.build_absolute_uri()
-    if query_param_key not in url_path:
+    if str(path.GREETING_PARAM_KEY) not in url_path:
       raise ValueError("Key for required query param: greeting is missing.")
 
 class GreetingParamValidator:  
