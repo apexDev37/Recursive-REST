@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -25,6 +27,8 @@ def save_custom_greeting(request: Request) -> Response:
 
     GreetingPathValidator.validate_query_param_present(request)
     custom_greeting = request.query_params['greeting']
+    GreetingParamValidator.validate_not_blank(custom_greeting)
+    GreetingValueValidator.validate_query_param_value(custom_greeting)
 
     if custom_greeting:
         greeting = Greeting(greeting_text=custom_greeting)
@@ -42,4 +46,18 @@ class GreetingPathValidator:
     query_param_key = '?greeting='
     url_path = request.build_absolute_uri()
     if query_param_key not in url_path:
-      raise ValueError("Greeting query param key is missing.")
+      raise ValueError("Key for required query param: greeting is missing.")
+
+class GreetingParamValidator:  
+  @staticmethod
+  def validate_not_blank(value: str) -> None:
+    if value.strip() == '':
+      raise ValueError("Value for query param: greeting cannot be blank or empty.")
+
+class GreetingValueValidator:
+  @staticmethod
+  def validate_query_param_value(value: str) -> None:
+    pattern = r'^[a-zA-Z]+$'
+    if not re.match(pattern, value):
+      raise ValueError("Value for query param: greeting cannot contain non alphabetic chars.")
+  
