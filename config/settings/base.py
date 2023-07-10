@@ -128,8 +128,35 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Configuration for the API versions for the Django project
+# Logging configuration
+# https://docs.djangoproject.com/en/4.2/topics/logging/
 
+LOGGING = {
+  "version": 1,
+  "disable_existing_loggers": False,
+  "handlers": {
+    "console": {
+      "class": "logging.StreamHandler",
+      "formatter": "simple",
+    }
+  },
+  "root": {
+    "handlers": ["console"],
+    "level": "DEBUG",
+  },
+  "formatters": {
+    "verbose": {
+      "format": "{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}",
+      "style": "{",
+    },
+    "simple": {
+      "format": "{levelname}: {message}",
+      "style": "{",
+    },
+  }
+} 
+
+# Configuration for the API versions for the Django project
 
 @dataclass(frozen=True)
 class API_VERSION:
