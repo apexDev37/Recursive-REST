@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -7,15 +9,16 @@ from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
 from greetings.utils.validators import * 
 
+logger = logging.getLogger(__name__)
+
 @api_view(["GET"])
 def list_greetings(request: Request) -> Response:
     """List all the greetings from the db."""
-
     if request.method == "GET":
         greetings = Greeting.objects.all()
         serializer = GreetingSerializer(greetings, many=True)
         return Response(serializer.data)
-
+    
     return Response(serializer.errors)
 
 
@@ -28,13 +31,17 @@ def save_custom_greeting(request: Request) -> Response:
   try:    
     greeting = Greeting(greeting_text=custom_greeting)
     greeting.save()
+    logger.info(f'save custom greeting "{greeting.greeting_text}" from user.')
+    
+    logger.debug('recursive call to the view.save_custom_greeting.')
+    return save_custom_greeting(request)
+    
     return Response(
       {"message": "Greeting saved"}, status=status.HTTP_201_CREATED)
 
   except Exception:
     return Response(
-      {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST)
-
+      {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST)  
 
 def validate_query_param(request: Request) -> str:
   GreetingPathValidator.validate_param_key_present(request)
