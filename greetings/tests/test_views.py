@@ -1,10 +1,14 @@
 from django.test import RequestFactory, TestCase
 from django.test.client import Client
+
 from rest_framework import status
 from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 
 from greetings.utils.constants import GreetingsPathConstants as path
+
+from greetings.views import save_custom_greeting
+from greetings.views import logger as view_logger
 
 class GreetingViewRequestTestCase(TestCase):
     """Tests for the Greeting view request, routing and response behavior"""
@@ -84,7 +88,7 @@ class GreetingsViewRecursiveTestCase(TestCase):
   """
   Test case to test behavior for recursive view call.
   """
-  
+
   def setUp(self) -> None:
     self.factory = RequestFactory()
     self.client = Client(
@@ -110,9 +114,28 @@ class GreetingsViewRecursiveTestCase(TestCase):
     self.assertEqual(recursive_request.method, 'POST')
     self.assertIn('QUERY_STRING', response.request)
 
-  def test_should_make_new_recursive_call_with_new_query_param_value(self) -> None:
-    pass
+  def test_should_log_debug_msg_before_making_recursive_call_with_new_query_param_value(self) -> None:
+    # Given
+    param = 'clone'
+    url = str(path.GREETING_URI) + param
+    initial_request = self.factory.post(url)
+    
+    # Then
+    with self.assertLogs(view_logger, level='DEBUG') as cm:
+      response = save_custom_greeting(initial_request) # When
+      self.assertGreaterEqual(len(cm.output), 1)
+      self.assertIn("DEBUG:greetings.views:recursive call", str(cm.output))
 
   def test_should_make_new_recursive_call_with_new_query_param_value(self) -> None:
-    pass
-  
+    # Given
+    param = 'clone'
+    url = str(path.GREETING_URI) + param
+    initial_request = self.factory.post(url)
+
+    # When
+    response = save_custom_greeting(initial_request)
+    
+    # Then
+    self.assertIsInstance(response, Response)
+    self.assertContains(response, status_code=status.HTTP_201_CREATED, text='goodbye')
+    self.assertNotEqual(response.data['goodbye'], param)
