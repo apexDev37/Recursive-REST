@@ -2,7 +2,6 @@ from django.test import RequestFactory, TestCase
 from django.test.client import Client
 
 from rest_framework import status
-from rest_framework.exceptions import ErrorDetail
 from rest_framework.response import Response
 
 from greetings.utils.constants import GreetingsPathConstants as path
@@ -10,8 +9,10 @@ from greetings.utils.constants import GreetingsPathConstants as path
 from greetings.views import save_custom_greeting
 from greetings.views import logger as view_logger
 
-class GreetingViewRequestTestCase(TestCase):
-    """Tests for the Greeting view request, routing and response behavior"""
+class RequestTestCase(TestCase):
+    """
+    Test case for the API view routing, request, and response behavior
+    """
 
     def setUp(self) -> None:
         self.client = Client(
@@ -21,10 +22,10 @@ class GreetingViewRequestTestCase(TestCase):
             },
         )
 
-    def test_should_return_400_BAD_REQUEST_for_request_without_a_greeting_query_param(
+    def test_should_return_400_BAD_REQUEST_for_request_without_a_greeting_query_param_key(
         self,
     ) -> None:
-        """Given no query param is provided, on a post request, return a 400 response."""
+        """Given no query param key is provided, on a post request, return a 400 response."""
 
         # Given
         url = str(path.GREETING_ENDPOINT)
@@ -34,12 +35,10 @@ class GreetingViewRequestTestCase(TestCase):
 
         # Then
         self.assertIsInstance(response, Response)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertContains(
-            response, status_code=status.HTTP_400_BAD_REQUEST, text="error"
-        )
-        self.assertContains(
-            response, status_code=status.HTTP_400_BAD_REQUEST, text="Invalid greeting"
+            response,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            text="Failed to save custom greeting from user."
         )
 
     def test_should_return_405_METHOD_NOT_ALLOWED_for_request_with_wrong_http_method(
@@ -57,9 +56,11 @@ class GreetingViewRequestTestCase(TestCase):
 
         # Then
         self.assertIsInstance(response, Response)
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-        self.assertIsInstance(error_detail, ErrorDetail)
-        self.assertIn("not allowed", error_detail)
+        self.assertContains(
+            response,
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+            text="not allowed."
+        )
 
     def test_should_return_201_CREATED_for_request_with_valid_greeting_query_param(
         self,
@@ -67,7 +68,7 @@ class GreetingViewRequestTestCase(TestCase):
         """Given a valid query param, on a post request, return a 201 response."""
 
         # Given
-        value = "hey, am not blank or null"
+        value = "valid"
         url = str(path.GREETING_URI) + value
 
         # When
@@ -75,16 +76,14 @@ class GreetingViewRequestTestCase(TestCase):
 
         # Then
         self.assertIsInstance(response, Response)
-        self.assertIsNotNone(value)
-        self.assertIsNot(value, "")
         self.assertContains(
-            response, status_code=status.HTTP_201_CREATED, text="message"
-        )
-        self.assertContains(
-            response, status_code=status.HTTP_201_CREATED, text="Greeting saved"
+            response,
+            status_code=status.HTTP_201_CREATED,
+            text="Saved custom greeting from user."
         )
 
-class GreetingsViewRecursiveTestCase(TestCase):
+
+class RecursiveTestCase(TestCase):
   """
   Test case to test behavior for recursive view call.
   """
@@ -98,7 +97,7 @@ class GreetingsViewRecursiveTestCase(TestCase):
       },
     )
 
-  def test_should_make_new_recursive_call_with_cloned_request_instance(self) -> None:
+  def test_should_make_recursive_call_with_cloned_request_instance(self) -> None:
     # Given
     param = 'clone'
     url = str(path.GREETING_URI) + param
@@ -114,7 +113,7 @@ class GreetingsViewRecursiveTestCase(TestCase):
     self.assertEqual(recursive_request.method, 'POST')
     self.assertIn('QUERY_STRING', response.request)
 
-  def test_should_log_debug_msg_before_making_recursive_call_with_new_query_param_value(self) -> None:
+  def test_should_log_debug_alert_message_when_making_recursive_call(self) -> None:
     # Given
     param = 'clone'
     url = str(path.GREETING_URI) + param
@@ -126,7 +125,7 @@ class GreetingsViewRecursiveTestCase(TestCase):
       self.assertGreaterEqual(len(cm.output), 1)
       self.assertIn("DEBUG:greetings.views:recursive call", str(cm.output))
 
-  def test_should_make_new_recursive_call_with_new_query_param_value(self) -> None:
+  def test_should_make_recursive_call_with_updated_query_param_value(self) -> None:
     # Given
     param = 'clone'
     url = str(path.GREETING_URI) + param
