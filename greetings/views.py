@@ -11,6 +11,7 @@ from django.test import RequestFactory
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
 from greetings.utils.validators import * 
+from greetings.utils.services import GreetingService
 
 CUSTOM_GOODBYE: str = 'Kwaheri'
 
@@ -37,7 +38,7 @@ def save_custom_greeting(request: Request) -> Response:
     if custom_greeting == CUSTOM_GOODBYE:
       return custom_greeting_response(custom_greeting, request)
 
-    try_create_and_save(custom_greeting)    
+    GreetingService.create_and_save(custom_greeting)        
     return try_make_recursive_call(custom_greeting, request)
 
   except Exception as exc:
@@ -64,12 +65,6 @@ def custom_greeting_response(custom_greeting, request) -> Response:
     "greeting": custom_greeting,
     "goodbye": request.query_params['greeting'],
   }, status=status.HTTP_201_CREATED)    
-
-
-def try_create_and_save(greeting: str) -> None:
-  greeting = Greeting(greeting_text=greeting)
-  greeting.save()
-  logger.info(f'Save custom greeting "{greeting.greeting_text}" from user.')
 
 
 def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
