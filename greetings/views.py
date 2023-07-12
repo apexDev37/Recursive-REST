@@ -31,23 +31,29 @@ def list_greetings(request: Request) -> Response:
 @api_view(["POST"])
 def save_custom_greeting(request: Request) -> Response:
   """Save a custom greeting from a user."""
+    
+  try:            
+    custom_greeting = validate_query_param(request)
+    if custom_greeting == CUSTOM_GOODBYE:
+      return custom_greeting_response(custom_greeting, request)
 
-  custom_greeting = validate_query_param(request)
-  if custom_greeting == CUSTOM_GOODBYE:
-    return custom_greeting_response(custom_greeting, request)
-  
-  try:    
-    greeting = Greeting(greeting_text=custom_greeting)
-    greeting.save()
-    logger.info(f'Save custom greeting "{greeting.greeting_text}" from user.')
-        
-    recursive_request = update_request_query_param(custom_greeting, request)
-    logger.debug('recursive call to api_view: views.save_custom_greeting.')
-    return save_custom_greeting(recursive_request)
+    try_create_and_save(custom_greeting)    
+    return try_make_recursive_call(custom_greeting, request)
 
-  except Exception:
-    return Response(
-      {"error": "Invalid greeting"}, status=status.HTTP_400_BAD_REQUEST)  
+  except Exception as exc:
+    return Response({
+    "status_code": status.HTTP_400_BAD_REQUEST,
+    "message": "error",
+    "description": "Failed to save custom greeting from user.",
+    }, status=status.HTTP_400_BAD_REQUEST, exception=exc)  
+
+
+def validate_query_param(request: Request) -> str:
+  GreetingPathValidator.validate_param_key_present(request)
+  custom_greeting = request.query_params['greeting']
+  GreetingParamValidator.validate_not_blank(custom_greeting)
+  GreetingValueValidator.validate_param_value(custom_greeting)
+  return custom_greeting
 
 
 def custom_greeting_response(custom_greeting, request) -> Response:
@@ -60,12 +66,16 @@ def custom_greeting_response(custom_greeting, request) -> Response:
   }, status=status.HTTP_201_CREATED)    
 
 
-def validate_query_param(request: Request) -> str:
-  GreetingPathValidator.validate_param_key_present(request)
-  custom_greeting = request.query_params['greeting']
-  GreetingParamValidator.validate_not_blank(custom_greeting)
-  GreetingValueValidator.validate_param_value(custom_greeting)
-  return custom_greeting
+def try_create_and_save(greeting: str) -> None:
+  greeting = Greeting(greeting_text=greeting)
+  greeting.save()
+  logger.info(f'Save custom greeting "{greeting.greeting_text}" from user.')
+
+
+def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
+  request = update_request_query_param(initial_param, initial_request)
+  logger.debug('recursive call to api_view: views.save_custom_greeting.')
+  return save_custom_greeting(request)
 
 
 def update_request_query_param(initial_param: str, initial_request: Request) -> WSGIRequest:
