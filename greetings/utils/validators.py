@@ -1,6 +1,7 @@
 import re
 
 from rest_framework.request import Request
+from rest_framework.exceptions import ValidationError
 
 from greetings.utils.constants import GreetingsPathConstants as path 
 
@@ -15,11 +16,11 @@ class GreetingParamValidator:
   @staticmethod
   def validate_not_blank(value: str) -> None:
     if value.strip() == '':
-      raise ValueError("Value for query param: greeting cannot be blank or empty.")
+      raise ValidationError("Value for query param: greeting cannot be blank or empty.")
 
 class GreetingValueValidator:
   @staticmethod
-  def validate_param_value(value: str) -> None:
+  def validate_alpha_chars(value: str) -> None:
     pattern = r'^[a-zA-Z]+$'
     if not re.match(pattern, value):
-      raise ValueError("Value for query param: greeting cannot contain non alphabetic chars.")
+      raise ValidationError("Value for query param: greeting cannot contain non alphabetic chars.")

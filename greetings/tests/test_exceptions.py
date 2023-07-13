@@ -1,5 +1,7 @@
 from django.test import RequestFactory, TestCase
 
+from rest_framework.exceptions import ValidationError
+
 from greetings.views import save_custom_greeting
 from greetings.utils.constants import GreetingsPathConstants as path
 
@@ -28,7 +30,7 @@ class GreetingsExceptionsTestCase(TestCase):
     
     # Then
     with self.assertRaisesMessage(
-      ValueError, 
+      ValidationError, 
       "Value for query param: greeting cannot be blank or empty."):
         save_custom_greeting(request) # When
   
@@ -41,6 +43,6 @@ class GreetingsExceptionsTestCase(TestCase):
     # Then
     self.assertIsInstance(value, str)
     with self.assertRaisesMessage(
-      ValueError, 
+      ValidationError, 
       "Value for query param: greeting cannot contain non alphabetic chars."):
         save_custom_greeting(request) # When
