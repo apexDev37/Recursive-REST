@@ -14,7 +14,9 @@ class GreetingTestCase(TestCase):
 
     def setUp(self) -> None:
         self.BASE_GREETING_TEXT = "Hello"
-        self.base_greeting = Greeting.objects.create(greeting_text=self.BASE_GREETING_TEXT)
+        self.base_greeting = Greeting.objects.create(
+            greeting_text=self.BASE_GREETING_TEXT
+        )
 
     def test_should_raise_exception_when_creating_instance_without_greeting_text_field_set(
         self,
@@ -23,8 +25,7 @@ class GreetingTestCase(TestCase):
 
         # Then
         with self.assertRaises(ValidationError):
-          invalid_greeting = Greeting.objects.create()  # When
-
+            invalid_greeting = Greeting.objects.create()  # When
 
     def test_should_generate_unique_uuid_for_new_greeting_instance(self) -> None:
         """Test to validate all new instances have a unique uuid field."""
@@ -51,4 +52,3 @@ class GreetingTestCase(TestCase):
         # Then
         with self.assertRaises(ValidationError):
             Greeting.objects.create(greeting_text=duplicate)
-            

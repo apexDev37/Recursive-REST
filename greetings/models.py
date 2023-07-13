@@ -2,7 +2,7 @@ import uuid
 
 from django.db import models
 
-from greetings.utils.validators import AlphaCharsValidator 
+from greetings.utils.validators import AlphaCharsValidator
 
 """
   Module Name:      greetings/models.py
@@ -21,10 +21,8 @@ class Greeting(models.Model):
 
     greeting_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     greeting_text = models.CharField(
-      unique=True, 
-      blank=False, 
-      max_length=50,
-      validators=[AlphaCharsValidator()])
+        unique=True, blank=False, max_length=50, validators=[AlphaCharsValidator()]
+    )
     greeting_created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
