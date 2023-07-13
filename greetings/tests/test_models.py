@@ -1,3 +1,5 @@
+import uuid
+
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.test import TestCase
@@ -6,31 +8,36 @@ from greetings.models import Greeting
 
 
 class GreetingTestCase(TestCase):
-    """Tests for the Greeting model"""
+    """
+    Tests for the Greeting model
+    """
 
     def setUp(self) -> None:
-        BASE_GREETING_TEXT = "Hello, tests!"
-        self.base_greeting = Greeting.objects.create(greeting_text=BASE_GREETING_TEXT)
+        self.BASE_GREETING_TEXT = "Hello"
+        self.base_greeting = Greeting.objects.create(greeting_text=self.BASE_GREETING_TEXT)
 
-    def test_should_raise_exception_when_creating_instance_without_greeting_text_field(
+    def test_should_raise_exception_when_creating_instance_without_greeting_text_field_set(
         self,
     ) -> None:
-        """Validation test on model to ensure that the greeting_text field is valid."""
+        """Test to validate that a value is assigned to the greeting_text field."""
 
+        # Then
         with self.assertRaises(ValidationError):
-            invalid_greeting = Greeting.objects.create()
+          invalid_greeting = Greeting.objects.create()  # When
+
 
     def test_should_generate_unique_uuid_for_new_greeting_instance(self) -> None:
-        """Validation test to ensure that all new instances have a unique uuid field."""
+        """Test to validate all new instances have a unique uuid field."""
 
         # given
         existing_uuid = self.base_greeting.greeting_id
 
         # when
-        new_greeting = Greeting.objects.create(greeting_text="new greeting")
-        new_uuid = new_greeting.greeting_id
+        greeting = Greeting.objects.create(greeting_text="new")
+        new_uuid = greeting.greeting_id
 
         # then
+        self.assertIsInstance(new_uuid, uuid.UUID)
         self.assertNotEqual(new_uuid, existing_uuid)
 
     def test_should_raise_exception_when_trying_to_save_a_non_unique_greeting_text(
@@ -39,8 +46,9 @@ class GreetingTestCase(TestCase):
         """Validation test to ensure that all persisted greetings have a unique `greeting_text`."""
 
         # Given
-        duplicate_greeting_text = "Hello, tests!"
+        duplicate = self.BASE_GREETING_TEXT
 
         # Then
-        with self.assertRaises(IntegrityError):
-            Greeting.objects.create(greeting_text=duplicate_greeting_text)
+        with self.assertRaises(ValidationError):
+            Greeting.objects.create(greeting_text=duplicate)
+            
