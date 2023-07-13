@@ -10,7 +10,7 @@ from django.test import RequestFactory
 
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
-from greetings.utils.validators import * 
+from greetings.utils.validators import GreetingPathValidator
 from greetings.utils.services import GreetingService
 
 CUSTOM_GOODBYE: str = 'Kwaheri'
@@ -52,8 +52,6 @@ def save_custom_greeting(request: Request) -> Response:
 def validate_query_param(request: Request) -> str:
   GreetingPathValidator.validate_param_key_present(request)
   custom_greeting = request.query_params['greeting']
-  GreetingParamValidator.validate_not_blank(custom_greeting)
-  GreetingValueValidator.validate_param_value(custom_greeting)
   return custom_greeting
 
 

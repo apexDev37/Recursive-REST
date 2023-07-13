@@ -13,14 +13,14 @@ class GreetingPathValidator:
       raise ValueError("Key for required query param: greeting is missing.")
 
 class GreetingParamValidator:  
-  @staticmethod
-  def validate_not_blank(value: str) -> None:
+  def __call__(self, value: str) -> None:
     if value.strip() == '':
       raise ValidationError("Value for query param: greeting cannot be blank or empty.")
 
 class GreetingValueValidator:
-  @staticmethod
-  def validate_alpha_chars(value: str) -> None:
+  def __call__(self, value: str) -> None:
     pattern = r'^[a-zA-Z]+$'
     if not re.match(pattern, value):
-      raise ValidationError("Value for query param: greeting cannot contain non alphabetic chars.")
+      raise ValidationError(
+        detail={'greeting_text': 'This field can only contain alphabet chars.'},
+        code='invalid_greeting_text')
