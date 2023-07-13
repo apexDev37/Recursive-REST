@@ -1,12 +1,8 @@
 import uuid
 
-from django.core.exceptions import ValidationError
 from django.db import models
 
-from greetings.utils.validators import (
-  GreetingParamValidator,
-  GreetingValueValidator,
-) 
+from greetings.utils.validators import AlphaCharsValidator 
 
 """
   Module Name:      greetings/models.py
@@ -28,7 +24,7 @@ class Greeting(models.Model):
       unique=True, 
       blank=False, 
       max_length=50,
-      validators=[GreetingParamValidator(), GreetingValueValidator()])
+      validators=[AlphaCharsValidator()])
     greeting_created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
