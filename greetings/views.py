@@ -7,6 +7,8 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from oauth2_provider.decorators import protected_resource
+
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
 from greetings.utils.services import GreetingService
@@ -19,6 +21,7 @@ factory = RequestFactory()
 
 
 @api_view(["GET"])
+@protected_resource(scopes=['read'])
 def list_greetings(request: Request) -> Response:
     """List all the greetings from the db."""
     if request.method == "GET":
@@ -30,6 +33,7 @@ def list_greetings(request: Request) -> Response:
 
 
 @api_view(["POST"])
+@protected_resource(scopes=['write'])
 def save_custom_greeting(request: Request) -> Response:
     """Save a custom greeting from a user."""
 
