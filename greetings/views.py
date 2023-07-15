@@ -1,4 +1,5 @@
 import logging
+import base64
 
 from django.core.handlers.wsgi import WSGIRequest
 from django.test import RequestFactory
@@ -86,7 +87,9 @@ def try_make_recursive_call(initial_param: str, initial_request: Request) -> Non
     return save_custom_greeting(request)
 
 def encode_credentials(client_id: str, client_secret: str) -> str:
-  pass
+  credential = f'{client_id}:{client_secret}'
+  encoded_credential = base64.b64encode(credential.encode('utf-8'))
+  return encoded_credential.decode()
 
 def update_request_query_param(
     initial_param: str, initial_request: Request
