@@ -77,10 +77,16 @@ def custom_greeting_response(custom_greeting, request) -> Response:
 
 
 def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
+    # Logic to get token and make authorized request
+    # encode_credentials()  
+
+    
     request = update_request_query_param(initial_param, initial_request)
     logger.debug("recursive call to api_view: views.save_custom_greeting.")
     return save_custom_greeting(request)
 
+def encode_credentials(client_id: str, client_secret: str) -> str:
+  pass
 
 def update_request_query_param(
     initial_param: str, initial_request: Request
