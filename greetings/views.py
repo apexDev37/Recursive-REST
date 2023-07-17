@@ -3,6 +3,7 @@ import logging
 import os
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 from django.core.handlers.wsgi import WSGIRequest
 from django.test import RequestFactory
 from oauth2_provider.decorators import protected_resource
@@ -91,19 +92,24 @@ def try_make_recursive_call(initial_param: str, initial_request: Request) -> Non
 
 
 def load_env_credentials() -> tuple[str]:
-  client_id = os.environ.get('CLIENT_ID', None)
-  client_secret = os.environ.get('CLIENT_SECRET', None)
+  client_id, client_secret = load_envs()
   
-  if client_id is None and client_secret is None:
+  if not is_credentials_set(client_id, client_secret):
     environ.Env.read_env(os.path.join(BASE_DIR, ".envs", "credentials.env"))
-    client_id = os.environ.get('CLIENT_ID', None)
-    client_secret = os.environ.get('CLIENT_SECRET', None)
+    client_id, client_secret = load_envs()
 
-  if client_id is None and client_secret is None:
-    raise ValueError('Client credentials not found on host machine or env file.')
+  if not is_credentials_set(client_id, client_secret):
+    raise ImproperlyConfigured('Client credentials not found on host machine or env file.')
 
   return {'CLIENT_ID': client_id, 'CLIENT_SECRET': client_secret}
 
+def load_envs() -> str:
+  client_id = os.environ.get('CLIENT_ID', None)
+  client_secret = os.environ.get('CLIENT_SECRET', None)
+  return client_id, client_secret
+
+def is_credentials_set(id: str, secret: str) -> bool:
+  return id is not None and secret is not None
 
 def encode_credentials(client_id: str, client_secret: str) -> str:
   credential = f'{client_id}:{client_secret}'

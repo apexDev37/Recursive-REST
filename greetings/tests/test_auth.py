@@ -1,7 +1,13 @@
+from django.core.exceptions import ImproperlyConfigured
+
 from unittest import TestCase
 from unittest.mock import call, patch
 
 from greetings.views import encode_credentials, load_env_credentials
+
+
+TEST_CLIENT_ID: str = 'test_id'
+TEST_CLIENT_SECRET: str = 'test_secret'
 
 
 class AuthenticationTestCase(TestCase):
@@ -11,8 +17,8 @@ class AuthenticationTestCase(TestCase):
   """
   
   def setUp(self) -> None:
-    self.client_id = 'test_id'
-    self.client_secret = 'test_secret'
+    self.client_id = TEST_CLIENT_ID
+    self.client_secret = TEST_CLIENT_SECRET
     self.credential = f'{self.client_id}:{self.client_secret}'
     
   @patch('greetings.views.base64.b64encode')
@@ -30,6 +36,30 @@ class AuthenticationTestCase(TestCase):
     mock_b64_encode.assert_called_once_with(self.credential.encode('utf-8'))
     self.assertEqual(actual, expected)
 
+
+class CredentialsTestCase(TestCase):
+  """
+  Test case to test that client credentials env 
+  variables are loaded from either the host machine
+  or a defined env file.
+  
+  Behavior: 
+    Given credentials set as env variables on the host
+    machine, Then load credentials from the host machine.
+    
+    Given credentials set in an env file, When credentials
+    not found on host machine, Then read env_file and load
+    client credentials.
+    
+    Given credentials are not set on both host machine and
+    env file, Then raise semantic error to inform user to
+    configure the required client credentials.
+  """
+
+  def setUp(self) -> None:
+    self.client_id = TEST_CLIENT_ID
+    self.client_secret = TEST_CLIENT_SECRET
+  
   @patch('greetings.views.os.environ')
   def test_should_raise_exception_for_missing_credentials_on_both_host_and_env_file(self, mock_environ) -> None:
     # Given
@@ -39,7 +69,7 @@ class AuthenticationTestCase(TestCase):
     ]    
     
     # Then
-    with self.assertRaises(ValueError):
+    with self.assertRaises(ImproperlyConfigured):
       load_env_credentials()  # When
 
   @patch('greetings.views.os.environ')
