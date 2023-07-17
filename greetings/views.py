@@ -1,15 +1,17 @@
-import logging
 import base64
+import logging
+import os
 
+import environ
 from django.core.handlers.wsgi import WSGIRequest
 from django.test import RequestFactory
+from oauth2_provider.decorators import protected_resource
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from oauth2_provider.decorators import protected_resource
-
+from config.settings.base import BASE_DIR
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
 from greetings.utils.services import GreetingService
@@ -79,12 +81,29 @@ def custom_greeting_response(custom_greeting, request) -> Response:
 
 def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
     # Logic to get token and make authorized request
-    # encode_credentials()  
+    ## load_env_credentials()
+    ## encode_credentials()  
 
     
     request = update_request_query_param(initial_param, initial_request)
     logger.debug("recursive call to api_view: views.save_custom_greeting.")
     return save_custom_greeting(request)
+
+
+def load_env_credentials() -> tuple[str]:
+  client_id = os.environ.get('CLIENT_ID', None)
+  client_secret = os.environ.get('CLIENT_SECRET', None)
+  
+  if client_id is None and client_secret is None:
+    environ.Env.read_env(os.path.join(BASE_DIR, ".envs", "credentials.env"))
+    client_id = os.environ.get('CLIENT_ID', None)
+    client_secret = os.environ.get('CLIENT_SECRET', None)
+
+  if client_id is None and client_secret is None:
+    raise ValueError('Client credentials not found on host machine or env file.')
+
+  return {'CLIENT_ID': client_id, 'CLIENT_SECRET': client_secret}
+
 
 def encode_credentials(client_id: str, client_secret: str) -> str:
   credential = f'{client_id}:{client_secret}'
