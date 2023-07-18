@@ -3,7 +3,11 @@ from django.core.exceptions import ImproperlyConfigured
 from unittest import TestCase
 from unittest.mock import call, patch
 
-from greetings.views import encode_credentials, load_env_credentials
+from greetings.views import (
+  encode_credentials, 
+  load_env_credentials,
+  request_access_token,
+)
 
 
 TEST_CLIENT_ID: str = 'test_id'
@@ -20,6 +24,7 @@ class AuthenticationTestCase(TestCase):
     self.client_id = TEST_CLIENT_ID
     self.client_secret = TEST_CLIENT_SECRET
     self.credential = f'{self.client_id}:{self.client_secret}'
+    self.encoded_credential = 'dGVzdF9pZDp0ZXN0X3NlY3JldA=='
     
   @patch('greetings.views.base64.b64encode')
   def test_should_base64_encode_the_provided_client_id_and_secret(self, mock_b64_encode) -> None:
@@ -35,7 +40,52 @@ class AuthenticationTestCase(TestCase):
     self.assertIsInstance(actual, str)
     mock_b64_encode.assert_called_once_with(self.credential.encode('utf-8'))
     self.assertEqual(actual, expected)
+  
+  @patch('greetings.views.requests')
+  def test_should_provide_minimum_required_arguments_for_access_token_request(self, mock_requests) -> None:    
+    # Given
+    expected = {
+      'url': "http://127.0.0.1:8000/o/token/",
+      'headers': {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": f"Basic {self.encoded_credential}",
+      },
+      'data': {"grant_type": "client_credentials"},
+    }
+    
+    # When
+    request_access_token(self.encoded_credential)
+    actual = mock_requests.post.call_args_list[0][1]
+        
+    # Then
+    mock_requests.post.assert_called_once()
+    self.assertIn('url', actual)
+    self.assertEqual(actual['url'], expected['url'])
 
+    self.assertDictContainsSubset(expected['headers'], actual['headers'])
+    self.assertDictEqual(actual['data'], expected['data'])
+    
+  @patch('greetings.views.requests')
+  def test_should_retrieve_access_token_response_from_valid_client_request(self, mock_requests) -> None:
+    # Given
+    expected = {
+      'access_token': 'valid_access_token_from_server', 
+      'expires_in': 36000, 
+      'token_type': 'Bearer', 
+      'scope': 'read write'
+    }
+    
+    # When
+    mock_requests.post.return_value.json.return_value = expected
+    response = request_access_token(self.encoded_credential)
+    actual = response.json()
+    
+    # Then
+    mock_requests.post.assert_called_once()
+    self.assertIsInstance(actual, dict)
+    self.assertIn('access_token', actual)
+    self.assertEqual(actual, expected)
+        
 
 class CredentialsTestCase(TestCase):
   """
