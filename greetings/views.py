@@ -3,6 +3,7 @@ import logging
 import os
 
 import environ
+import requests
 from django.core.exceptions import ImproperlyConfigured
 from django.core.handlers.wsgi import WSGIRequest
 from django.test import RequestFactory
@@ -84,6 +85,7 @@ def try_make_recursive_call(initial_param: str, initial_request: Request) -> Non
     # Logic to get token and make authorized request
     ## load_env_credentials()
     ## encode_credentials()  
+    ## request_access_token()  
 
     
     request = update_request_query_param(initial_param, initial_request)
@@ -115,6 +117,20 @@ def encode_credentials(client_id: str, client_secret: str) -> str:
   credential = f'{client_id}:{client_secret}'
   encoded_credential = base64.b64encode(credential.encode('utf-8'))
   return encoded_credential.decode()
+
+def request_access_token(encoded_credential: str) -> Response:
+
+  response = requests.post(
+    url='http://127.0.0.1:8000/o/token/',
+    headers={
+      'Content-Type': 'application/x-www-form-urlencoded', 
+      'Cache-Control': 'no-cache',
+      'Authorization': f'Basic {encoded_credential}'
+    },
+    data={'grant_type': 'client_credentials'},
+    timeout=10
+  )
+  return response
 
 def update_request_query_param(
     initial_param: str, initial_request: Request
