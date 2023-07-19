@@ -21,6 +21,12 @@ from greetings.utils.validators import GreetingPathValidator
 
 CUSTOM_GOODBYE: str = "Kwaheri"
 
+TOKEN_ENDPOINT: str = 'http://127.0.0.1:8000/o/token/'
+CONTENT_TYPE: str = "application/x-www-form-urlencoded"
+CACHE_CONTROL: str = "no-cache"
+AUTHORIZATION: str = "Basic {0}"
+GRANT_TYPE: str = "client_credentials"
+
 logger = logging.getLogger(__name__)
 factory = RequestFactory()
 
@@ -121,16 +127,23 @@ def encode_credentials(client_id: str, client_secret: str) -> str:
 def request_access_token(encoded_credential: str) -> Response:
 
   response = requests.post(
-    url='http://127.0.0.1:8000/o/token/',
-    headers={
-      'Content-Type': 'application/x-www-form-urlencoded', 
-      'Cache-Control': 'no-cache',
-      'Authorization': f'Basic {encoded_credential}'
-    },
-    data={'grant_type': 'client_credentials'},
+    url=TOKEN_ENDPOINT,
+    headers=get_headers(encoded_credential),
+    data=get_data(),
     timeout=10
   )
   return response
+
+def get_headers(credential: str) -> dict[str, str]:
+  return {
+    # Add request headers here    
+    "Content-Type": CONTENT_TYPE,
+    "Cache-Control": CACHE_CONTROL,
+    "Authorization": AUTHORIZATION.format(credential),
+  }
+
+def get_data() -> dict[str, str]:
+  return {"grant_type": GRANT_TYPE}
 
 def update_request_query_param(
     initial_param: str, initial_request: Request
