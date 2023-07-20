@@ -92,6 +92,8 @@ def try_make_recursive_call(initial_param: str, initial_request: Request) -> Non
     ## load_env_credentials()
     ## encode_credentials()  
     ## request_access_token()  
+    ## build_authorized_request()
+    ## make_recursive_call()
 
     
     request = update_request_query_param(initial_param, initial_request)
@@ -144,6 +146,15 @@ def get_headers(credential: str) -> dict[str, str]:
 
 def get_data() -> dict[str, str]:
   return {"grant_type": GRANT_TYPE}
+
+def build_authorized_request(token: str, request: WSGIRequest) -> WSGIRequest:
+  auth = 'Bearer {0}'.format(token)
+  request.environ.setdefault('HTTP_AUTHORIZATION', auth)
+  return request
+
+def make_recursive_call(request: WSGIRequest) -> save_custom_greeting:
+  return save_custom_greeting(request)
+  
 
 def update_request_query_param(
     initial_param: str, initial_request: Request
