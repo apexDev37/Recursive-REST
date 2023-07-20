@@ -1,12 +1,17 @@
 from django.core.exceptions import ImproperlyConfigured
+from django.http import HttpRequest
+from django.test.client import RequestFactory
 
 from unittest import TestCase
 from unittest.mock import call, patch
 
+from greetings.utils.constants import GreetingsPathConstants as path
 from greetings.views import (
   encode_credentials, 
   load_env_credentials,
   request_access_token,
+  build_authorized_request,
+  make_recursive_call,
 )
 
 
@@ -187,4 +192,50 @@ class CredentialsTestCase(TestCase):
     self.assertEqual(actual['CLIENT_ID'], expected['CLIENT_ID'])
     self.assertEqual(actual['CLIENT_SECRET'], expected['CLIENT_SECRET'])
 
+
+class AuthorizationTestCase(TestCase):
+  """
+  Test case to test that request instances have the expected
+  authorization 'Bearer <token>' for request instances passed
+  to protected DRF API views. 
+  """
+
+  def setUp(self) -> None:
+    factory = RequestFactory()
+    self.initial_request = factory.post(    # Mimic initial request
+      path=str(path.GREETING_URI),
+      headers={'Accept': 'application/json'}
+    )
+
+
+  def test_should_build_authorized_request_for_recursive_view_call(self) -> None:
+    # Given
+    access_token = 'test_access_token'
+
+    # When
+    actual = build_authorized_request(access_token, self.initial_request)
+    auth = actual.environ.get('HTTP_AUTHORIZATION')
+    
+    # Then
+    self.assertIsInstance(actual, HttpRequest)
+    self.assertIsNotNone(auth)
+    self.assertEqual(auth.split(' ')[0], 'Bearer')
+    self.assertEqual(auth.split(' ')[1], access_token)
   
+  @patch(f'{BASE_MODULE}.save_custom_greeting')
+  def test_should_make_recursive_view_call_with_authorized_request_argument(self, mock_view) -> None:
+    # Given
+    access_token = 'test_access_token'
+    authorized_request = build_authorized_request(access_token, self.initial_request)
+    expected = 'Authorization'
+
+    # When
+    make_recursive_call(authorized_request)
+    actual = mock_view.call_args[0][0]
+
+    # Then
+    mock_view.assert_called_once()
+    mock_view.assert_called_once_with(authorized_request)
+    self.assertTrue(actual.environ.get('HTTP_AUTHORIZATION'))
+    self.assertIn(expected, actual.headers)
+          
