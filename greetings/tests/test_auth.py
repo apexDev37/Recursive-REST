@@ -10,7 +10,7 @@ from greetings.views import (
   encode_credentials, 
   load_env_credentials,
   request_access_token,
-  build_authorized_request,
+  authorize_request,
   make_recursive_call,
 )
 
@@ -19,12 +19,93 @@ BASE_MODULE: str = 'greetings.views'
 
 TEST_CLIENT_ID: str = 'test_id'
 TEST_CLIENT_SECRET: str = 'test_secret'
+TEST_ACCESS_TOKEN: str = 'test_access_token'
 
 TOKEN_ENDPOINT: str = 'http://127.0.0.1:8000/o/token/'
 CONTENT_TYPE: str = "application/x-www-form-urlencoded"
 CACHE_CONTROL: str = "no-cache"
 AUTHORIZATION: str = "Basic {0}"
 GRANT_TYPE: str = "client_credentials"
+
+
+class CredentialsTestCase(TestCase):
+  """
+  Test case to test that client credentials env 
+  variables are provided and loaded from either the 
+  host machine or a defined env file.
+  
+  Behavior: 
+    GIVEN credentials are set on the host machine
+    WHEN env variables are found in host environ
+    THEN load and return the credentials (client ID and SECRET).
+    
+    GIVEN credentials are set in an env file
+    WHEN credentials not found in host environ
+    THEN read provided env_file and return client credentials.
+    
+    GIVEN credentials not set by user
+    WHEN credentials are not found on host machine and env file
+    THEN raise exception on required credentials not configured.
+  """
+
+  def setUp(self) -> None:
+    self.client_id = TEST_CLIENT_ID
+    self.client_secret = TEST_CLIENT_SECRET
+  
+  @patch(f'{BASE_MODULE}.os.environ')
+  def test_should_raise_exception_for_missing_credentials_on_both_host_and_env_file(self, mock_environ) -> None:
+    # Given
+    mock_environ.get.side_effect = [
+      None, None,   # Not found on host
+      None, None    # Not found in env file
+    ]    
+    
+    # Then
+    with self.assertRaises(ImproperlyConfigured):
+      load_env_credentials()  # When
+
+  @patch(f'{BASE_MODULE}.os.environ')
+  @patch(f'{BASE_MODULE}.environ.Env', autospec=True)
+  def test_should_prefer_load_client_credentials_from_host_machine(self, mock_env, mock_environ) -> None:
+    # Given
+    expected = {'CLIENT_ID': self.client_id, 'CLIENT_SECRET': self.client_secret}
+    mock_environ.get.side_effect = [
+      expected['CLIENT_ID'], expected['CLIENT_SECRET']    # Found on host
+    ]
+    
+    # When
+    actual = load_env_credentials()
+    
+    # Then    
+    mock_env.read_env.assert_not_called()
+    mock_environ.get.assert_has_calls([
+      call('CLIENT_ID', None),
+      call('CLIENT_SECRET', None)
+    ])
+    self.assertEqual(actual['CLIENT_ID'], expected['CLIENT_ID'])
+    self.assertEqual(actual['CLIENT_SECRET'], expected['CLIENT_SECRET'])
+
+  @patch(f'{BASE_MODULE}.os.environ')
+  @patch(f'{BASE_MODULE}.environ.Env', autospec=True)
+  def test_should_fallback_to_load_client_credentials_from_env_file(self,  mock_env, mock_environ) -> None:
+    # Given
+    expected = {'CLIENT_ID': self.client_id, 'CLIENT_SECRET': self.client_secret}
+    mock_environ.get.side_effect = [
+      None, None,                                         # Not found on host
+      expected['CLIENT_ID'], expected['CLIENT_SECRET']    # Found in env file
+    ]
+    
+    # When
+    actual = load_env_credentials()
+    
+    # Then    
+    mock_env.read_env.assert_called_once()
+    mock_environ.get.assert_has_calls([
+      call('CLIENT_ID', None), call('CLIENT_SECRET', None),   # Try load from host
+      call('CLIENT_ID', None),call('CLIENT_SECRET', None)     # Try load from env file
+    ])
+    self.assertEqual(actual['CLIENT_ID'], expected['CLIENT_ID'])
+    self.assertEqual(actual['CLIENT_SECRET'], expected['CLIENT_SECRET'])
 
 
 class AuthenticationTestCase(TestCase):
@@ -113,86 +194,6 @@ class AuthenticationTestCase(TestCase):
     self.assertEqual(actual, expected)
         
 
-class CredentialsTestCase(TestCase):
-  """
-  Test case to test that client credentials env 
-  variables are provided and loaded from either the 
-  host machine or a defined env file.
-  
-  Behavior: 
-    GIVEN credentials are set on the host machine
-    WHEN env variables are found in host environ
-    THEN load and return the credentials (client ID and SECRET).
-    
-    GIVEN credentials are set in an env file
-    WHEN credentials not found in host environ
-    THEN read provided env_file and return client credentials.
-    
-    GIVEN credentials not set by user
-    WHEN credentials are not found on host machine and env file
-    THEN raise exception on required credentials not configured.
-  """
-
-  def setUp(self) -> None:
-    self.client_id = TEST_CLIENT_ID
-    self.client_secret = TEST_CLIENT_SECRET
-  
-  @patch(f'{BASE_MODULE}.os.environ')
-  def test_should_raise_exception_for_missing_credentials_on_both_host_and_env_file(self, mock_environ) -> None:
-    # Given
-    mock_environ.get.side_effect = [
-      None, None,   # Not found on host
-      None, None    # Not found in env file
-    ]    
-    
-    # Then
-    with self.assertRaises(ImproperlyConfigured):
-      load_env_credentials()  # When
-
-  @patch(f'{BASE_MODULE}.os.environ')
-  @patch(f'{BASE_MODULE}.environ.Env', autospec=True)
-  def test_should_prefer_load_client_credentials_from_host_machine(self, mock_env, mock_environ) -> None:
-    # Given
-    expected = {'CLIENT_ID': self.client_id, 'CLIENT_SECRET': self.client_secret}
-    mock_environ.get.side_effect = [
-      expected['CLIENT_ID'], expected['CLIENT_SECRET']    # Found on host
-    ]
-    
-    # When
-    actual = load_env_credentials()
-    
-    # Then    
-    mock_env.read_env.assert_not_called()
-    mock_environ.get.assert_has_calls([
-      call('CLIENT_ID', None),
-      call('CLIENT_SECRET', None)
-    ])
-    self.assertEqual(actual['CLIENT_ID'], expected['CLIENT_ID'])
-    self.assertEqual(actual['CLIENT_SECRET'], expected['CLIENT_SECRET'])
-
-  @patch(f'{BASE_MODULE}.os.environ')
-  @patch(f'{BASE_MODULE}.environ.Env', autospec=True)
-  def test_should_fallback_to_load_client_credentials_from_env_file(self,  mock_env, mock_environ) -> None:
-    # Given
-    expected = {'CLIENT_ID': self.client_id, 'CLIENT_SECRET': self.client_secret}
-    mock_environ.get.side_effect = [
-      None, None,                                         # Not found on host
-      expected['CLIENT_ID'], expected['CLIENT_SECRET']    # Found in env file
-    ]
-    
-    # When
-    actual = load_env_credentials()
-    
-    # Then    
-    mock_env.read_env.assert_called_once()
-    mock_environ.get.assert_has_calls([
-      call('CLIENT_ID', None), call('CLIENT_SECRET', None),   # Try load from host
-      call('CLIENT_ID', None),call('CLIENT_SECRET', None)     # Try load from env file
-    ])
-    self.assertEqual(actual['CLIENT_ID'], expected['CLIENT_ID'])
-    self.assertEqual(actual['CLIENT_SECRET'], expected['CLIENT_SECRET'])
-
-
 class AuthorizationTestCase(TestCase):
   """
   Test case to test that request instances have the expected
@@ -202,31 +203,30 @@ class AuthorizationTestCase(TestCase):
 
   def setUp(self) -> None:
     factory = RequestFactory()
+    self.access_token = TEST_ACCESS_TOKEN
     self.initial_request = factory.post(    # Mimic initial request
       path=str(path.GREETING_URI),
       headers={'Accept': 'application/json'}
     )
 
-
-  def test_should_build_authorized_request_for_recursive_view_call(self) -> None:
+  def test_should_authorize_request_argument_for_recursive_view_call(self) -> None:
     # Given
-    access_token = 'test_access_token'
+    expected = {'type': 'Bearer', 'token': self.access_token}
 
     # When
-    actual = build_authorized_request(access_token, self.initial_request)
+    actual = authorize_request(self.access_token, self.initial_request)
     auth = actual.environ.get('HTTP_AUTHORIZATION')
     
     # Then
     self.assertIsInstance(actual, HttpRequest)
     self.assertIsNotNone(auth)
-    self.assertEqual(auth.split(' ')[0], 'Bearer')
-    self.assertEqual(auth.split(' ')[1], access_token)
+    self.assertEqual(auth.split(' ')[0], expected['type'])
+    self.assertEqual(auth.split(' ')[1], expected['token'])
   
   @patch(f'{BASE_MODULE}.save_custom_greeting')
   def test_should_make_recursive_view_call_with_authorized_request_argument(self, mock_view) -> None:
     # Given
-    access_token = 'test_access_token'
-    authorized_request = build_authorized_request(access_token, self.initial_request)
+    authorized_request = authorize_request(self.access_token, self.initial_request)
     expected = 'Authorization'
 
     # When
