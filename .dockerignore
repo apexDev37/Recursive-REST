@@ -4,6 +4,7 @@
 .pytest_cache
 __pycache__
 *.pyc
+.gitignore
 
 # Ignore static files (can be collected separately)
 /static
@@ -43,6 +44,10 @@ nosetests.xml
 docs/
 
 # Ignore any other unnecessary files or directories specific to your project
+requirements/
+resources/
+README.md
+LICENSE
 
 # Exclude production-specific files (additional exclusions for production)
 
