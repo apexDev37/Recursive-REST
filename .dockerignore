@@ -44,7 +44,7 @@ nosetests.xml
 docs/
 
 # Ignore any other unnecessary files or directories specific to your project
-requirements/
+# requirements/
 resources/
 README.md
 LICENSE
