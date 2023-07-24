@@ -57,6 +57,7 @@ def save_custom_greeting(request: Request) -> Response:
         return try_make_recursive_call(custom_greeting, request)
 
     except Exception as exc:
+        logger.warning('Error on saving custom greeting!', exc_info=exc)
         return Response(
             {
                 "status_code": status.HTTP_400_BAD_REQUEST,
@@ -88,17 +89,19 @@ def custom_greeting_response(custom_greeting, request) -> Response:
 
 
 def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
+    request = update_request_query_param(initial_param, initial_request)
+
     # Logic to get token and make authorized request
-    ## load_env_credentials()
-    ## encode_credentials()  
-    ## request_access_token()  
-    ## build_authorized_request()
-    ## make_recursive_call()
+    credentials = load_env_credentials()
+    encoded_credential = encode_credentials(
+      credentials['CLIENT_ID'], credentials['CLIENT_SECRET'])
+    response = request_access_token(encoded_credential)
+    access_token = response.json()['access_token']
+    request = authorize_request(access_token, request)
 
     
-    request = update_request_query_param(initial_param, initial_request)
     logger.debug("recursive call to api_view: views.save_custom_greeting.")
-    return save_custom_greeting(request)
+    return make_recursive_call(request)
 
 
 def load_env_credentials() -> tuple[str]:
