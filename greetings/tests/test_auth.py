@@ -9,7 +9,7 @@ from unittest import TestCase
 from unittest.mock import call, patch
 
 from greetings.utils.constants import GreetingsPathConstants as path
-from greetings.utils.services import OAuth2CredentialsService
+from greetings.utils.services import CredentialManagerService, OAuth2CredentialsService
 from greetings.views import (
   authorize_request,
   make_recursive_call,
@@ -53,7 +53,9 @@ class CredentialsTestCase(TestCase):
   def setUp(self) -> None:
     self.client_id = TEST_CLIENT_ID
     self.client_secret = TEST_CLIENT_SECRET
-    self.under_test = OAuth2CredentialsService()
+    self.credential = f'{self.client_id}:{self.client_secret}'
+    self.encoded_credential = 'dGVzdF9pZDp0ZXN0X3NlY3JldA=='
+    self.under_test = CredentialManagerService()
   
   @patch(f'{BASE_MODULE}.os.environ')
   def test_should_raise_exception_for_missing_credentials_on_both_host_and_env_file(self, mock_environ) -> None:
@@ -109,6 +111,20 @@ class CredentialsTestCase(TestCase):
     ])
     self.assertEqual(actual['CLIENT_ID'], expected['CLIENT_ID'])
     self.assertEqual(actual['CLIENT_SECRET'], expected['CLIENT_SECRET'])
+  
+  @patch(f'{BASE_MODULE}.base64.b64encode')
+  def test_should_base64_encode_the_provided_client_id_and_secret(self, mock_b64_encode) -> None:
+    # Given
+    expected = self.encoded_credential
+    
+    # When
+    mock_b64_encode.return_value.decode.return_value = expected
+    actual = self.under_test._encode_credentials(self.client_id, self.client_secret)
+    
+    # Then
+    self.assertIsInstance(actual, str)
+    mock_b64_encode.assert_called_once_with(self.credential.encode('utf-8'))
+    self.assertEqual(actual, expected)
 
 
 class AuthenticationTestCase(TestCase):
@@ -138,20 +154,6 @@ class AuthenticationTestCase(TestCase):
     self.encoded_credential = 'dGVzdF9pZDp0ZXN0X3NlY3JldA=='
     self.under_test = OAuth2CredentialsService()
 
-    
-  @patch(f'{BASE_MODULE}.base64.b64encode')
-  def test_should_base64_encode_the_provided_client_id_and_secret(self, mock_b64_encode) -> None:
-    # Given
-    expected = self.encoded_credential
-    
-    # When
-    mock_b64_encode.return_value.decode.return_value = expected
-    actual = self.under_test._encode_credentials(self.client_id, self.client_secret)
-    
-    # Then
-    self.assertIsInstance(actual, str)
-    mock_b64_encode.assert_called_once_with(self.credential.encode('utf-8'))
-    self.assertEqual(actual, expected)
   
   @patch(f'{BASE_MODULE}.requests')
   def test_should_provide_minimum_required_arguments_for_access_token_request(self, mock_requests) -> None:    

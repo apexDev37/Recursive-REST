@@ -45,12 +45,14 @@ class GreetingService:
         greeting.save()
         logger.info(f'Save custom greeting "{greeting.greeting_text}" from user.')
 
+
 class OAuth2CredentialsService:
   """
   Singleton service to encapsulate logic to get an access token.
   """
     
   _instance = None
+  _credential_service = None
 
   def __new__(cls):
     if cls._instance is None:
@@ -59,17 +61,56 @@ class OAuth2CredentialsService:
     return cls._instance
 
   def _initialize(self):
-    # define initialization code  here
-    pass
+    self._credential_service = CredentialManagerService()
   
   def get_access_token(self) -> dict:
+    encoded_credential = self._credential_service.get_encoded_credential()
+    response = self._request_access_token(encoded_credential)
+    return response.json()['access_token']
+
+  def _request_access_token(self, encoded_credential: str) -> Response:
+    response = requests.post(
+      url=TOKEN_ENDPOINT,
+      headers=self._get_headers(encoded_credential),
+      data=self._get_data(),
+      timeout=10
+    )
+    return response
+
+  def _get_headers(self, credential: str) -> dict[str, str]:
+    return {
+      # Add request headers here    
+      "Content-Type": CONTENT_TYPE,
+      "Cache-Control": CACHE_CONTROL,
+      "Authorization": AUTHORIZATION.format(credential),
+    }
+
+  def _get_data(self) -> dict[str, str]:
+    return {"grant_type": GRANT_TYPE}
+
+
+class CredentialManagerService:
+  """
+  Singleton service to load, encode, and manage OAuth client credentials.
+  """
+
+  _instance = None
+
+  def __new__(cls):
+    if cls._instance is None:
+      cls._instance = super(CredentialManagerService, cls).__new__(cls)
+      cls._instance._initialize()
+    return cls._instance
+
+  def _initialize(self):
+    pass
+  
+  def get_encoded_credential(self) -> str:
     credentials = self._load_env_credentials()
     encoded_credential = self._encode_credentials(
       credentials['CLIENT_ID'], credentials['CLIENT_SECRET'])
-    response = self._request_access_token(encoded_credential)
-    access_token = response.json()['access_token']
-    return access_token
-
+    return encoded_credential
+  
   def _load_env_credentials(self) -> tuple[str]:
     client_id, client_secret = self._load_envs()
     
@@ -94,25 +135,3 @@ class OAuth2CredentialsService:
     credential = f'{client_id}:{client_secret}'
     encoded_credential = base64.b64encode(credential.encode('utf-8'))
     return encoded_credential.decode()
-
-  def _request_access_token(self, encoded_credential: str) -> Response:
-
-    response = requests.post(
-      url=TOKEN_ENDPOINT,
-      headers=self._get_headers(encoded_credential),
-      data=self._get_data(),
-      timeout=10
-    )
-    return response
-
-  def _get_headers(self, credential: str) -> dict[str, str]:
-    return {
-      # Add request headers here    
-      "Content-Type": CONTENT_TYPE,
-      "Cache-Control": CACHE_CONTROL,
-      "Authorization": AUTHORIZATION.format(credential),
-    }
-
-  def _get_data(self, ) -> dict[str, str]:
-    return {"grant_type": GRANT_TYPE}
-  
