@@ -9,7 +9,8 @@ from unittest import TestCase
 from unittest.mock import call, patch
 
 from greetings.utils.constants import GreetingsPathConstants as path
-from greetings.utils.services import CredentialManagerService, OAuth2CredentialsService
+from greetings.auth.services import OAuth2CredentialsService
+from greetings.auth.credentials import CredentialManagerService
 from greetings.views import (
   authorize_request,
   make_recursive_call,
@@ -17,7 +18,9 @@ from greetings.views import (
 )
 
 
-BASE_MODULE: str = 'greetings.utils.services'
+BASE_MODULE: str = 'greetings.auth'
+AUTH_MODULE: str = BASE_MODULE + '.services'
+CREDENTIAL_MODULE: str = BASE_MODULE + '.credentials'
 
 TEST_CLIENT_ID: str = 'test_id'
 TEST_CLIENT_SECRET: str = 'test_secret'
@@ -57,7 +60,7 @@ class CredentialsTestCase(TestCase):
     self.encoded_credential = 'dGVzdF9pZDp0ZXN0X3NlY3JldA=='
     self.under_test = CredentialManagerService()
   
-  @patch(f'{BASE_MODULE}.os.environ')
+  @patch(f'{CREDENTIAL_MODULE}.os.environ')
   def test_should_raise_exception_for_missing_credentials_on_both_host_and_env_file(self, mock_environ) -> None:
     # Given
     mock_environ.get.side_effect = [
@@ -69,8 +72,8 @@ class CredentialsTestCase(TestCase):
     with self.assertRaises(ImproperlyConfigured):
       self.under_test._load_env_credentials()  # When
 
-  @patch(f'{BASE_MODULE}.os.environ')
-  @patch(f'{BASE_MODULE}.environ.Env', autospec=True)
+  @patch(f'{CREDENTIAL_MODULE}.os.environ')
+  @patch(f'{CREDENTIAL_MODULE}.environ.Env', autospec=True)
   def test_should_prefer_load_client_credentials_from_host_machine(self, mock_env, mock_environ) -> None:
     # Given
     expected = {'CLIENT_ID': self.client_id, 'CLIENT_SECRET': self.client_secret}
@@ -90,8 +93,8 @@ class CredentialsTestCase(TestCase):
     self.assertEqual(actual['CLIENT_ID'], expected['CLIENT_ID'])
     self.assertEqual(actual['CLIENT_SECRET'], expected['CLIENT_SECRET'])
 
-  @patch(f'{BASE_MODULE}.os.environ')
-  @patch(f'{BASE_MODULE}.environ.Env', autospec=True)
+  @patch(f'{CREDENTIAL_MODULE}.os.environ')
+  @patch(f'{CREDENTIAL_MODULE}.environ.Env', autospec=True)
   def test_should_fallback_to_load_client_credentials_from_env_file(self,  mock_env, mock_environ) -> None:
     # Given
     expected = {'CLIENT_ID': self.client_id, 'CLIENT_SECRET': self.client_secret}
@@ -112,7 +115,7 @@ class CredentialsTestCase(TestCase):
     self.assertEqual(actual['CLIENT_ID'], expected['CLIENT_ID'])
     self.assertEqual(actual['CLIENT_SECRET'], expected['CLIENT_SECRET'])
   
-  @patch(f'{BASE_MODULE}.base64.b64encode')
+  @patch(f'{CREDENTIAL_MODULE}.base64.b64encode')
   def test_should_base64_encode_the_provided_client_id_and_secret(self, mock_b64_encode) -> None:
     # Given
     expected = self.encoded_credential
@@ -155,7 +158,7 @@ class AuthenticationTestCase(TestCase):
     self.under_test = OAuth2CredentialsService()
 
   
-  @patch(f'{BASE_MODULE}.requests')
+  @patch(f'{AUTH_MODULE}.requests')
   def test_should_provide_minimum_required_arguments_for_access_token_request(self, mock_requests) -> None:    
     # Given
     expected = {
@@ -179,7 +182,7 @@ class AuthenticationTestCase(TestCase):
     self.assertDictContainsSubset(expected['headers'], actual['headers'])
     self.assertDictEqual(actual['data'], expected['data'])
     
-  @patch(f'{BASE_MODULE}.requests')
+  @patch(f'{AUTH_MODULE}.requests')
   def test_should_retrieve_access_token_response_from_valid_client_request(self, mock_requests) -> None:
     # Given
     expected = {

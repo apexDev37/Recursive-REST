@@ -10,7 +10,8 @@ from rest_framework.response import Response
 
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
-from greetings.utils.services import GreetingService, OAuth2CredentialsService
+from greetings.auth.services import OAuth2CredentialsService
+from greetings.utils.services import GreetingService
 from greetings.utils.validators import GreetingPathValidator
 
 CUSTOM_GOODBYE: str = "Kwaheri"
