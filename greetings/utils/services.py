@@ -12,7 +12,6 @@ from typing import Self
 
 from greetings.models import Greeting
 
-
 logger = logging.getLogger(__name__)
 
 

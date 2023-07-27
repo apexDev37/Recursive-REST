@@ -7,12 +7,12 @@ related constants to be reused in the greetings app.
 
 
 # OAuth Endpoints
-TOKEN_ENDPOINT: str = 'http://127.0.0.1:8000/o/token/'
+TOKEN_ENDPOINT: str = "http://127.0.0.1:8000/o/token/"
 
-# Request Header values 
+# Request Header values
 CONTENT_TYPE: str = "application/x-www-form-urlencoded"
 CACHE_CONTROL: str = "no-cache"
 AUTHORIZATION: str = "Basic {0}"
 
-# Request Data values 
+# Request Data values
 GRANT_TYPE: str = "client_credentials"

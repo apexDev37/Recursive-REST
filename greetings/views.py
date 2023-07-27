@@ -8,9 +8,9 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from greetings.auth.services import OAuth2CredentialsService
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
-from greetings.auth.services import OAuth2CredentialsService
 from greetings.utils.services import GreetingService
 from greetings.utils.validators import GreetingPathValidator
 
@@ -21,7 +21,7 @@ factory = RequestFactory()
 
 
 @api_view(["GET"])
-@protected_resource(scopes=['read'])
+@protected_resource(scopes=["read"])
 def list_greetings(request: Request) -> Response:
     """List all the greetings from the db."""
     if request.method == "GET":
@@ -33,7 +33,7 @@ def list_greetings(request: Request) -> Response:
 
 
 @api_view(["POST"])
-@protected_resource(scopes=['write'])
+@protected_resource(scopes=["write"])
 def save_custom_greeting(request: Request) -> Response:
     """Save a custom greeting from a user."""
 
@@ -46,7 +46,7 @@ def save_custom_greeting(request: Request) -> Response:
         return try_make_recursive_call(custom_greeting, request)
 
     except Exception as exc:
-        logger.warning('Error on saving custom greeting!', exc_info=exc)
+        logger.warning("Error on saving custom greeting!", exc_info=exc)
         return Response(
             {
                 "status_code": status.HTTP_400_BAD_REQUEST,
@@ -78,20 +78,23 @@ def custom_greeting_response(custom_greeting, request) -> Response:
 
 
 def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
-    request = update_request_query_param(initial_param, initial_request)  
+    request = update_request_query_param(initial_param, initial_request)
     logger.debug("recursive call to api_view: views.save_custom_greeting.")
     return make_recursive_call(request)
-  
+
+
 def make_recursive_call(request: WSGIRequest) -> save_custom_greeting:
-  oauth_service = OAuth2CredentialsService()
-  access_token = oauth_service.get_access_token()
-  request = authorize_request(access_token, request)
-  return save_custom_greeting(request)
-  
+    oauth_service = OAuth2CredentialsService()
+    access_token = oauth_service.get_access_token()
+    request = authorize_request(access_token, request)
+    return save_custom_greeting(request)
+
+
 def authorize_request(token: str, request: WSGIRequest) -> WSGIRequest:
-  auth = 'Bearer {0}'.format(token)
-  request.environ.setdefault('HTTP_AUTHORIZATION', auth)
-  return request
+    auth = "Bearer {0}".format(token)
+    request.environ.setdefault("HTTP_AUTHORIZATION", auth)
+    return request
+
 
 def update_request_query_param(
     initial_param: str, initial_request: Request
