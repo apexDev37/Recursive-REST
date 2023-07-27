@@ -78,23 +78,20 @@ def custom_greeting_response(custom_greeting, request) -> Response:
 
 
 def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
-    request = update_request_query_param(initial_param, initial_request)
-
-    oauth_service = OAuth2CredentialsService()
-    access_token = oauth_service.get_access_token()
-    request = authorize_request(access_token, request)
-  
+    request = update_request_query_param(initial_param, initial_request)  
     logger.debug("recursive call to api_view: views.save_custom_greeting.")
     return make_recursive_call(request)
-
+  
+def make_recursive_call(request: WSGIRequest) -> save_custom_greeting:
+  oauth_service = OAuth2CredentialsService()
+  access_token = oauth_service.get_access_token()
+  request = authorize_request(access_token, request)
+  return save_custom_greeting(request)
+  
 def authorize_request(token: str, request: WSGIRequest) -> WSGIRequest:
   auth = 'Bearer {0}'.format(token)
   request.environ.setdefault('HTTP_AUTHORIZATION', auth)
   return request
-
-def make_recursive_call(request: WSGIRequest) -> save_custom_greeting:
-  return save_custom_greeting(request)
-  
 
 def update_request_query_param(
     initial_param: str, initial_request: Request
