@@ -5,4 +5,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api-auth/", include("rest_framework.urls")),
     path("greetings/", include("greetings.urls")),
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]

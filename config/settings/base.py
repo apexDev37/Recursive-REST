@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "greetings",
+    "oauth2_provider",
 ]
 
 MIDDLEWARE = [
@@ -161,3 +162,19 @@ LOGGING = {
 @dataclass(frozen=True)
 class API_VERSION:
     GREETINGS: str = "api/v1/"
+
+# Django REST Framework Configuration
+# https://django-oauth-toolkit.readthedocs.io/en/latest/rest-framework/getting_started.html
+
+REST_FRAMEWORK = {
+  'DEFAULT_AUTHENTICATION_CLASSES': (
+    'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+  ),
+  'DEFAULT_PERMISSION_CLASSES': (
+    # 'rest_framework.permissions.IsAuthenticated',
+  )
+}
+
+OAUTH2_PROVIDER = {
+  'SCOPES': {'read': 'Read scope', 'write': 'Write scope'}
+}
