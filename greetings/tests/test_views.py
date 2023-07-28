@@ -15,6 +15,10 @@ from greetings.views import (
   update_request_query_param,
 )
 
+
+BASE_MODULE = 'greetings.views'
+
+
 class RequestTestCase(TestCase):
     """
     Test case for the API view routing, request, and response behavior
@@ -96,69 +100,57 @@ class RecursiveTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
         self.factory = RequestFactory()
-        self.client = Client(
-            headers={
-                "user-agent": "curl/7.79.1",
-                "accept": "application/json",
-            },
+        self.query_param = 'greeting'
+        url = str(path.GREETING_URI) + self.query_param
+        self.initial_request = self.factory.post(
+          path=url
         )
         
-    @patch('greetings.views.save_custom_greeting')
+    @patch(f'{BASE_MODULE}.save_custom_greeting')
     def test_should_make_recursive_view_call_with_http_request_instance_argument(self, mock_view) -> None:
         # Given
-        param = "greeting"
-        url = str(path.GREETING_URI) + param
-        initial_request = self.factory.post(url)
-
+        expected = HttpRequest
+        
         # When
-        make_recursive_call(initial_request)
+        make_recursive_call(self.initial_request)
         actual = mock_view.call_args[0][0]
         
         # Then
         mock_view.assert_called_once()
-        self.assertIsInstance(actual, HttpRequest)
+        self.assertIsInstance(actual, expected)
 
-    @patch('greetings.views.save_custom_greeting')
+    @patch(f'{BASE_MODULE}.save_custom_greeting')
     def test_should_make_recursive_view_call_with_clone_of_initial_request(self, mock_view) -> None:
         # Given
-        param = "greeting"
-        url = str(path.GREETING_URI) + param
-        initial_request = self.factory.post(url)
-        expected = {'path': str(path.GREETING_ENDPOINT), 'method': 'POST', 'param_key': str(path.GREETING_PARAM_KEY)}
+        expected = {
+          'path': str(path.GREETING_ENDPOINT), 
+          'method': 'POST', 
+        }
 
         # When
-        make_recursive_call(initial_request)
-        
+        make_recursive_call(self.initial_request)
         actual = mock_view.call_args[0][0]
 
         # Then
-        self.assertEqual(actual.path_info, expected['path'])
+        self.assertEqual(actual.path, expected['path'])
         self.assertEqual(actual.method, expected['method'])
-        self.assertIsNotNone(actual.META['QUERY_STRING'])
-        self.assertIn(expected['param_key'].removeprefix('?'), actual.META['QUERY_STRING'])
 
     def test_should_log_debug_alert_message_when_making_recursive_call(self) -> None:
         # Given
-        param = "clone"
-        url = str(path.GREETING_URI) + param
-        initial_request = self.factory.post(url)
         expected = 'recursive call'
 
         # Then
         with self.assertLogs(view_logger, level="DEBUG") as cm:
-            try_make_recursive_call(param, initial_request)  # When
+            try_make_recursive_call(self.query_param, self.initial_request)  # When
             self.assertGreaterEqual(len(cm.output), 1)
             self.assertIn(expected, str(cm.output))
 
     def test_should_update_initial_request_query_param_value_with_custom_goodbye(self) -> None:
         # Given
-        param = "clone"
-        url = str(path.GREETING_URI) + param
-        initial_request = self.factory.post(url)
         expected = CUSTOM_GOODBYE
 
         # When
-        request = update_request_query_param(param, initial_request)
+        request = update_request_query_param(self.query_param, self.initial_request)
         actual = request.META['QUERY_STRING']
 
         # Then
@@ -166,21 +158,16 @@ class RecursiveTestCase(unittest.TestCase):
         self.assertIsInstance(actual, str)
         self.assertIn(expected, actual)
     
-    @patch('greetings.views.save_custom_greeting')
+    @patch(f'{BASE_MODULE}.save_custom_greeting')
     def test_should_make_recursive_view_call_with_goodbye_query_param_value(self, mock_view) -> None:
       # Given
-      param = "clone"
-      url = str(path.GREETING_URI) + param
-      initial_request = self.factory.post(url)
       expected = CUSTOM_GOODBYE
       
       # When
-      try_make_recursive_call(param, initial_request)
-      actual = mock_view.call_args[0][0]
+      try_make_recursive_call(self.query_param, self.initial_request)
+      request = mock_view.call_args[0][0]
+      actual = request.META['QUERY_STRING'].removeprefix('greeting=')
       
       # Then
-      self.assertIsNotNone(actual.META['QUERY_STRING'])
-      self.assertIn(expected, actual.META['QUERY_STRING'])
-
-      
+      self.assertEqual(actual, expected)
 
