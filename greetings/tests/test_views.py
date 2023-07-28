@@ -1,12 +1,19 @@
+import unittest
+from unittest.mock import patch
+
+from django.http import HttpRequest
 from django.test import RequestFactory, TestCase
 from django.test.client import Client
 from rest_framework import status
 from rest_framework.response import Response
-
 from greetings.utils.constants import GreetingsPathConstants as path
 from greetings.views import logger as view_logger
-from greetings.views import save_custom_greeting
-
+from greetings.views import CUSTOM_GOODBYE
+from greetings.views import (
+  make_recursive_call,
+  try_make_recursive_call,
+  update_request_query_param,
+)
 
 class RequestTestCase(TestCase):
     """
@@ -82,7 +89,7 @@ class RequestTestCase(TestCase):
         )
 
 
-class RecursiveTestCase(TestCase):
+class RecursiveTestCase(unittest.TestCase):
     """
     Test case to test behavior for recursive view call.
     """
@@ -95,47 +102,85 @@ class RecursiveTestCase(TestCase):
                 "accept": "application/json",
             },
         )
-
-    def test_should_make_recursive_call_with_cloned_request_instance(self) -> None:
+        
+    @patch('greetings.views.save_custom_greeting')
+    def test_should_make_recursive_view_call_with_http_request_instance_argument(self, mock_view) -> None:
         # Given
-        param = "clone"
+        param = "greeting"
         url = str(path.GREETING_URI) + param
         initial_request = self.factory.post(url)
 
         # When
-        response = self.client.post(url)
-        recursive_request = response.wsgi_request
+        make_recursive_call(initial_request)
+        actual = mock_view.call_args[0][0]
+        
+        # Then
+        mock_view.assert_called_once()
+        self.assertIsInstance(actual, HttpRequest)
+
+    @patch('greetings.views.save_custom_greeting')
+    def test_should_make_recursive_view_call_with_clone_of_initial_request(self, mock_view) -> None:
+        # Given
+        param = "greeting"
+        url = str(path.GREETING_URI) + param
+        initial_request = self.factory.post(url)
+        expected = {'path': str(path.GREETING_ENDPOINT), 'method': 'POST', 'param_key': str(path.GREETING_PARAM_KEY)}
+
+        # When
+        make_recursive_call(initial_request)
+        
+        actual = mock_view.call_args[0][0]
 
         # Then
-        self.assertEqual(type(recursive_request), type(initial_request))
-        self.assertEqual(recursive_request.path_info, initial_request.path_info)
-        self.assertEqual(recursive_request.method, "POST")
-        self.assertIn("QUERY_STRING", response.request)
+        self.assertEqual(actual.path_info, expected['path'])
+        self.assertEqual(actual.method, expected['method'])
+        self.assertIsNotNone(actual.META['QUERY_STRING'])
+        self.assertIn(expected['param_key'].removeprefix('?'), actual.META['QUERY_STRING'])
 
     def test_should_log_debug_alert_message_when_making_recursive_call(self) -> None:
         # Given
         param = "clone"
         url = str(path.GREETING_URI) + param
         initial_request = self.factory.post(url)
+        expected = 'recursive call'
 
         # Then
         with self.assertLogs(view_logger, level="DEBUG") as cm:
-            response = save_custom_greeting(initial_request)  # When
+            try_make_recursive_call(param, initial_request)  # When
             self.assertGreaterEqual(len(cm.output), 1)
-            self.assertIn("DEBUG:greetings.views:recursive call", str(cm.output))
+            self.assertIn(expected, str(cm.output))
 
-    def test_should_make_recursive_call_with_updated_query_param_value(self) -> None:
+    def test_should_update_initial_request_query_param_value_with_custom_goodbye(self) -> None:
         # Given
         param = "clone"
         url = str(path.GREETING_URI) + param
         initial_request = self.factory.post(url)
+        expected = CUSTOM_GOODBYE
 
         # When
-        response = save_custom_greeting(initial_request)
+        request = update_request_query_param(param, initial_request)
+        actual = request.META['QUERY_STRING']
 
         # Then
-        self.assertIsInstance(response, Response)
-        self.assertContains(
-            response, status_code=status.HTTP_201_CREATED, text="goodbye"
-        )
-        self.assertNotEqual(response.data["goodbye"], param)
+        self.assertIsNotNone(actual)
+        self.assertIsInstance(actual, str)
+        self.assertIn(expected, actual)
+    
+    @patch('greetings.views.save_custom_greeting')
+    def test_should_make_recursive_view_call_with_goodbye_query_param_value(self, mock_view) -> None:
+      # Given
+      param = "clone"
+      url = str(path.GREETING_URI) + param
+      initial_request = self.factory.post(url)
+      expected = CUSTOM_GOODBYE
+      
+      # When
+      try_make_recursive_call(param, initial_request)
+      actual = mock_view.call_args[0][0]
+      
+      # Then
+      self.assertIsNotNone(actual.META['QUERY_STRING'])
+      self.assertIn(expected, actual.META['QUERY_STRING'])
+
+      
+
