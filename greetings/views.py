@@ -1,6 +1,5 @@
 import logging
 
-from django.core.handlers.wsgi import WSGIRequest
 from django.test import RequestFactory
 from oauth2_provider.decorators import protected_resource
 from rest_framework import status
@@ -8,10 +7,9 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from greetings.auth.services import OAuth2CredentialsService
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
-from greetings.utils.services import GreetingService
+from greetings.utils.services import GreetingService, RecursiveViewService
 from greetings.utils.validators import GreetingPathValidator
 
 CUSTOM_GOODBYE: str = "Kwaheri"
@@ -43,7 +41,7 @@ def save_custom_greeting(request: Request) -> Response:
             return custom_greeting_response(custom_greeting, request)
 
         GreetingService.create_and_save(custom_greeting)
-        return try_make_recursive_call(custom_greeting, request)
+        return RecursiveViewService.try_make_recursive_call(custom_greeting, request)
 
     except Exception as exc:
         logger.warning("Error on saving custom greeting!", exc_info=exc)
@@ -75,30 +73,3 @@ def custom_greeting_response(custom_greeting, request) -> Response:
         },
         status=status.HTTP_201_CREATED,
     )
-
-
-def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
-    request = update_request_query_param(initial_param, initial_request)
-    logger.debug("recursive call to api_view: views.save_custom_greeting.")
-    return make_recursive_call(request)
-
-
-def make_recursive_call(request: WSGIRequest) -> save_custom_greeting:
-    oauth_service = OAuth2CredentialsService()
-    access_token = oauth_service.get_access_token()
-    request = authorize_request(access_token, request)
-    return save_custom_greeting(request)
-
-
-def authorize_request(token: str, request: WSGIRequest) -> WSGIRequest:
-    auth = "Bearer {0}".format(token)
-    request.environ.setdefault("HTTP_AUTHORIZATION", auth)
-    return request
-
-
-def update_request_query_param(
-    initial_param: str, initial_request: Request
-) -> WSGIRequest:
-    path: str = initial_request.build_absolute_uri()
-    updated_path = path.replace(f"={initial_param}", f"={CUSTOM_GOODBYE}", 1)
-    return factory.post(path=updated_path)

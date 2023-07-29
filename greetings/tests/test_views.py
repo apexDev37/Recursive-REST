@@ -7,13 +7,8 @@ from django.test.client import Client
 from rest_framework import status
 from rest_framework.response import Response
 from greetings.utils.constants import GreetingsPathConstants as path
-from greetings.views import logger as view_logger
+from greetings.utils.services import RecursiveViewService
 from greetings.views import CUSTOM_GOODBYE
-from greetings.views import (
-  make_recursive_call,
-  try_make_recursive_call,
-  update_request_query_param,
-)
 
 
 BASE_MODULE = 'greetings.views'
@@ -112,7 +107,7 @@ class RecursiveTestCase(unittest.TestCase):
         expected = HttpRequest
         
         # When
-        make_recursive_call(self.initial_request)
+        RecursiveViewService._make_recursive_call(self.initial_request)
         actual = mock_view.call_args[0][0]
         
         # Then
@@ -128,7 +123,7 @@ class RecursiveTestCase(unittest.TestCase):
         }
 
         # When
-        make_recursive_call(self.initial_request)
+        RecursiveViewService._make_recursive_call(self.initial_request)
         actual = mock_view.call_args[0][0]
 
         # Then
@@ -137,11 +132,12 @@ class RecursiveTestCase(unittest.TestCase):
 
     def test_should_log_debug_alert_message_when_making_recursive_call(self) -> None:
         # Given
+        service_logger = 'greetings.utils.services'
         expected = 'recursive call'
 
         # Then
-        with self.assertLogs(view_logger, level="DEBUG") as cm:
-            try_make_recursive_call(self.query_param, self.initial_request)  # When
+        with self.assertLogs(service_logger, level="DEBUG") as cm:
+            RecursiveViewService.try_make_recursive_call(self.query_param, self.initial_request)  # When
             self.assertGreaterEqual(len(cm.output), 1)
             self.assertIn(expected, str(cm.output))
 
@@ -150,7 +146,7 @@ class RecursiveTestCase(unittest.TestCase):
         expected = CUSTOM_GOODBYE
 
         # When
-        request = update_request_query_param(self.query_param, self.initial_request)
+        request = RecursiveViewService._update_request_query_param(self.query_param, self.initial_request)
         actual = request.META['QUERY_STRING']
 
         # Then
@@ -164,7 +160,7 @@ class RecursiveTestCase(unittest.TestCase):
       expected = CUSTOM_GOODBYE
       
       # When
-      try_make_recursive_call(self.query_param, self.initial_request)
+      RecursiveViewService.try_make_recursive_call(self.query_param, self.initial_request)
       request = mock_view.call_args[0][0]
       actual = request.META['QUERY_STRING'].removeprefix('greeting=')
       
