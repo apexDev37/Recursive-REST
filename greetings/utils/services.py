@@ -57,15 +57,8 @@ class RecursiveViewService:
     from greetings.views import save_custom_greeting
 
     oauth_service = OAuth2CredentialsService()
-    access_token = oauth_service.get_access_token()
-    request = RecursiveViewService._authorize_request(access_token, request)
+    request = oauth_service.authorize_request(request)
     return save_custom_greeting(request)
-
-
-  def _authorize_request(token: str, request: WSGIRequest) -> WSGIRequest:
-    auth = "Bearer {0}".format(token)
-    request.environ.setdefault("HTTP_AUTHORIZATION", auth)
-    return request
 
 
   def _update_request_query_param(

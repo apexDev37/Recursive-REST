@@ -3,6 +3,7 @@ Module for OAuth2 services for the greetings app.
 """
 
 import requests
+from django.core.handlers.wsgi import WSGIRequest
 from rest_framework.response import Response
 
 from greetings.auth.constants import *
@@ -25,6 +26,12 @@ class OAuth2CredentialsService:
 
     def _initialize(self):
         self._credential_service = CredentialManagerService()
+
+    def authorize_request(self, request: WSGIRequest) -> WSGIRequest:
+      token = self.get_access_token()
+      auth = "Bearer {0}".format(token)
+      request.environ.setdefault("HTTP_AUTHORIZATION", auth)
+      return request
 
     def get_access_token(self) -> dict:
         encoded_credential = self._credential_service.get_encoded_credential()
