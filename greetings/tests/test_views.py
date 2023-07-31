@@ -167,3 +167,17 @@ class RecursiveTestCase(unittest.TestCase):
       # Then
       self.assertEqual(actual, expected)
 
+    @patch(f"greetings.views.save_custom_greeting")
+    def test_should_make_recursive_view_call_with_authorized_request_argument(self, mock_view) -> None:
+      # Given
+      expected = "Authorization"
+
+      # When
+      RecursiveViewService._make_recursive_call(self.initial_request)
+      actual = mock_view.call_args[0][0]
+
+      # Then
+      mock_view.assert_called_once()
+      mock_view.assert_called_once_with(self.initial_request)
+      self.assertTrue(actual.environ.get("HTTP_AUTHORIZATION"))
+      self.assertIn(expected, actual.headers)
