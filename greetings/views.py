@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
 from greetings.utils.constants import CUSTOM_GOODBYE
+from greetings.utils.responses import CustomGreetingResponse
 from greetings.utils.services import GreetingService, RecursiveViewService
 from greetings.utils.validators import GreetingPathValidator
 
@@ -51,25 +52,19 @@ def validate_query_param(request: Request) -> str:
 
 
 def custom_greeting_response(custom_greeting, request) -> Response:
-    return Response(
-        {
-            "status_code": status.HTTP_201_CREATED,
-            "message": "Success",
-            "description": "Saved custom greeting from user.",
-            "greeting": custom_greeting,
-            "goodbye": request.query_params["greeting"],
-        },
-        status=status.HTTP_201_CREATED,
+    data = CustomGreetingResponse(
+      status_code=status.HTTP_201_CREATED,
+      message='Success',
+      description='Saved custom greeting submitted by user.',
+      data={'greeting': custom_greeting, 'goodbye': request.query_params["greeting"]}
     )
+    return Response(data.prepare(), status=status.HTTP_201_CREATED)
 
 
 def custom_error_response(exception: Exception) -> Response:
-    return Response(
-        {
-            "status_code": status.HTTP_400_BAD_REQUEST,
-            "message": "error",
-            "description": "Failed to save custom greeting from user.",
-        },
-        status=status.HTTP_400_BAD_REQUEST,
-        exception=exception,
+    data = CustomGreetingResponse(
+      status_code=status.HTTP_400_BAD_REQUEST,
+      message='Error',
+      description='Failed to save custom greeting submitted by user.',
     )
+    return Response(data.prepare(), status=status.HTTP_400_BAD_REQUEST)
