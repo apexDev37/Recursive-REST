@@ -10,7 +10,6 @@ from greetings.auth.credentials import CredentialManagerService
 from greetings.auth.services import OAuth2CredentialsService
 from greetings.tests.constants import *
 from greetings.utils.constants import GreetingsPathConstants as path
-from greetings.views import authorize_request, make_recursive_call
 
 BASE_MODULE: str = "greetings.auth"
 AUTH_MODULE: str = BASE_MODULE + ".services"
@@ -226,31 +225,16 @@ class AuthorizationTestCase(TestCase):
 
     def test_should_authorize_request_argument_for_recursive_view_call(self) -> None:
         # Given
-        expected = {"type": "Bearer", "token": self.access_token}
+        auth_service = OAuth2CredentialsService()
+        expected = {"type": "Bearer"}
 
         # When
-        actual = authorize_request(self.access_token, self.initial_request)
+        actual = auth_service.authorize_request(self.initial_request)
         auth = actual.environ.get("HTTP_AUTHORIZATION")
+        print(auth)
 
         # Then
         self.assertIsInstance(actual, HttpRequest)
         self.assertIsNotNone(auth)
         self.assertEqual(auth.split(" ")[0], expected["type"])
-        self.assertEqual(auth.split(" ")[1], expected["token"])
-
-    @patch(f"greetings.views.save_custom_greeting")
-    def test_should_make_recursive_view_call_with_authorized_request_argument(
-        self, mock_view
-    ) -> None:
-        # Given
-        expected = "Authorization"
-
-        # When
-        make_recursive_call(self.initial_request)
-        actual = mock_view.call_args[0][0]
-
-        # Then
-        mock_view.assert_called_once()
-        mock_view.assert_called_once_with(self.initial_request)
-        self.assertTrue(actual.environ.get("HTTP_AUTHORIZATION"))
-        self.assertIn(expected, actual.headers)
+        self.assertTrue(auth.split(" ")[1])

@@ -19,3 +19,7 @@ class GreetingsPathConstants(Enum):
 
     def __str__(self) -> str:
         return self.value
+
+
+# String literals for the 'greetings' app
+CUSTOM_GOODBYE: str = "kwaheri"
