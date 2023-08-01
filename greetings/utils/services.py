@@ -47,13 +47,13 @@ class RecursiveViewService:
   """
 
   @staticmethod
-  def try_make_recursive_call(initial_param: str, initial_request: Request) -> None:
-    request = RecursiveViewService._update_request_query_param(initial_param, initial_request)
+  def make_recursive_call(greeting: str, initial_request: Request) -> None:
+    request = RecursiveViewService._update_query_param(greeting, initial_request)
     logger.debug("recursive call to api_view: views.save_custom_greeting.")
-    return RecursiveViewService._make_recursive_call(request)
+    return RecursiveViewService._call_view(request)
 
 
-  def _make_recursive_call(request: WSGIRequest) -> Response:
+  def _call_view(request: WSGIRequest) -> Response:
     from greetings.views import save_custom_greeting
 
     oauth_service = OAuth2CredentialsService()
@@ -61,10 +61,10 @@ class RecursiveViewService:
     return save_custom_greeting(request)
 
 
-  def _update_request_query_param(
-      initial_param: str, initial_request: Request
+  def _update_query_param(
+      greeting: str, initial_request: Request
   ) -> WSGIRequest:
     path: str = initial_request.build_absolute_uri()
-    updated_path = path.replace(f"={initial_param}", f"={CUSTOM_GOODBYE}", 1)
+    updated_path = path.replace(f"={greeting}", f"={CUSTOM_GOODBYE}", 1)
     factory = RequestFactory()
     return factory.post(path=updated_path)

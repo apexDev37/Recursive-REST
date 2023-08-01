@@ -30,7 +30,7 @@ class RecursiveTestCase(unittest.TestCase):
         expected = CUSTOM_GOODBYE
 
         # When
-        request = self.under_test._update_request_query_param(self.query_param, self.initial_request)
+        request = self.under_test._update_query_param(self.query_param, self.initial_request)
         actual = request.META['QUERY_STRING']
 
         # Then
@@ -45,7 +45,7 @@ class RecursiveTestCase(unittest.TestCase):
 
         # Then
         with self.assertLogs(service_logger, level="DEBUG") as cm:
-            self.under_test.try_make_recursive_call(self.query_param, self.initial_request)  # When
+            self.under_test.make_recursive_call(self.query_param, self.initial_request)  # When
             self.assertGreaterEqual(len(cm.output), 1)
             self.assertIn(expected, str(cm.output))
         
@@ -55,7 +55,7 @@ class RecursiveTestCase(unittest.TestCase):
         expected = HttpRequest
         
         # When
-        self.under_test._make_recursive_call(self.initial_request)
+        self.under_test._call_view(self.initial_request)
         actual = mock_view.call_args[0][0]
         
         # Then
@@ -71,7 +71,7 @@ class RecursiveTestCase(unittest.TestCase):
         }
 
         # When
-        self.under_test._make_recursive_call(self.initial_request)
+        self.under_test._call_view(self.initial_request)
         actual = mock_view.call_args[0][0]
 
         # Then
@@ -84,7 +84,7 @@ class RecursiveTestCase(unittest.TestCase):
       expected = CUSTOM_GOODBYE
       
       # When
-      self.under_test.try_make_recursive_call(self.query_param, self.initial_request)
+      self.under_test.make_recursive_call(self.query_param, self.initial_request)
       request = mock_view.call_args[0][0]
       actual = request.META['QUERY_STRING'].removeprefix('greeting=')
       
@@ -97,7 +97,7 @@ class RecursiveTestCase(unittest.TestCase):
       expected = "Authorization"
 
       # When
-      self.under_test._make_recursive_call(self.initial_request)
+      self.under_test._call_view(self.initial_request)
       actual = mock_view.call_args[0][0]
 
       # Then
