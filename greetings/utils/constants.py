@@ -23,4 +23,3 @@ class GreetingsPathConstants(Enum):
 
 # String literals for the 'greetings' app
 CUSTOM_GOODBYE: str = "kwaheri"
- 

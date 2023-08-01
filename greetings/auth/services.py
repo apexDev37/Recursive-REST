@@ -28,10 +28,10 @@ class OAuth2CredentialsService:
         self._credential_service = CredentialManagerService()
 
     def authorize_request(self, request: WSGIRequest) -> WSGIRequest:
-      token = self.get_access_token()
-      auth = "Bearer {0}".format(token)
-      request.environ.setdefault("HTTP_AUTHORIZATION", auth)
-      return request
+        token = self.get_access_token()
+        auth = "Bearer {0}".format(token)
+        request.environ.setdefault("HTTP_AUTHORIZATION", auth)
+        return request
 
     def get_access_token(self) -> dict:
         encoded_credential = self._credential_service.get_encoded_credential()

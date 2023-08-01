@@ -2,10 +2,10 @@ from django.test import TestCase
 from django.test.client import Client
 from rest_framework import status
 from rest_framework.response import Response
+
 from greetings.utils.constants import GreetingsPathConstants as path
 
-
-BASE_MODULE = 'greetings.views'
+BASE_MODULE = "greetings.views"
 
 
 class RequestTestCase(TestCase):

@@ -13,7 +13,6 @@ from greetings.utils.constants import CUSTOM_GOODBYE
 from greetings.utils.services import GreetingService, RecursiveViewService
 from greetings.utils.validators import GreetingPathValidator
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +41,7 @@ def save_custom_greeting(request: Request) -> Response:
 
     except Exception as exc:
         logger.warning("Error on saving custom greeting!", exc_info=exc)
-        return custom_error_response(exc)  
+        return custom_error_response(exc)
 
 
 def validate_query_param(request: Request) -> str:
@@ -65,12 +64,12 @@ def custom_greeting_response(custom_greeting, request) -> Response:
 
 
 def custom_error_response(exception: Exception) -> Response:
-  return Response(
-      {
-          "status_code": status.HTTP_400_BAD_REQUEST,
-          "message": "error",
-          "description": "Failed to save custom greeting from user.",
-      },
-      status=status.HTTP_400_BAD_REQUEST,
-      exception=exception,
-  )
+    return Response(
+        {
+            "status_code": status.HTTP_400_BAD_REQUEST,
+            "message": "error",
+            "description": "Failed to save custom greeting from user.",
+        },
+        status=status.HTTP_400_BAD_REQUEST,
+        exception=exception,
+    )
