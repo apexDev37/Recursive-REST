@@ -16,9 +16,8 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from greetings.auth.services import OAuth2CredentialsService
 from greetings.models import Greeting
+from greetings.utils.constants import CUSTOM_GOODBYE
 
-
-CUSTOM_GOODBYE: str = "Kwaheri"
 
 logger = logging.getLogger(__name__)
 

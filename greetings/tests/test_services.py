@@ -5,7 +5,7 @@ from django.http import HttpRequest
 from django.test import RequestFactory
 from greetings.utils.constants import GreetingsPathConstants as path
 from greetings.utils.services import RecursiveViewService
-from greetings.views import CUSTOM_GOODBYE
+from greetings.utils.constants import CUSTOM_GOODBYE
 
 
 BASE_MODULE = 'greetings.views'
