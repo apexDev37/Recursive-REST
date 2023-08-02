@@ -17,14 +17,14 @@ class RequestTestCase(TestCase):
 
     def setUp(self) -> None:
         # Create custom access token for testing purposes only
-        self.test_token = AccessToken.objects.create(
+        test_token = AccessToken.objects.create(
           token='test_access_token', 
           user=None, 
           expires=timezone.now() + timezone.timedelta(seconds=60), 
           scope='read write',
         )        
         self.client = APIClient()
-        self.client.force_authenticate(token=self.test_token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer {0}'.format(test_token.token))
 
     def test_should_return_400_BAD_REQUEST_for_request_without_a_greeting_query_param_key(
         self,
