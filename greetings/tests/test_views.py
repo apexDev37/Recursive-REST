@@ -1,5 +1,7 @@
 from django.test import TestCase
-from django.test.client import Client
+from django.utils import timezone
+from oauth2_provider.models import AccessToken
+from rest_framework.test import APIClient
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -14,12 +16,15 @@ class RequestTestCase(TestCase):
     """
 
     def setUp(self) -> None:
-        self.client = Client(
-            headers={
-                "user-agent": "curl/7.79.1",
-                "accept": "application/json",
-            },
-        )
+        # Create custom access token for testing purposes only
+        self.test_token = AccessToken.objects.create(
+          token='test_access_token', 
+          user=None, 
+          expires=timezone.now() + timezone.timedelta(seconds=60), 
+          scope='read write',
+        )        
+        self.client = APIClient()
+        self.client.force_authenticate(token=self.test_token)
 
     def test_should_return_400_BAD_REQUEST_for_request_without_a_greeting_query_param_key(
         self,
