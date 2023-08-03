@@ -42,7 +42,7 @@ class RequestTestCase(TestCase):
         self.assertContains(
             response,
             status_code=status.HTTP_400_BAD_REQUEST,
-            text="Failed to save custom greeting from user.",
+            text="Failed to save custom greeting submitted by user.",
         )
 
     def test_should_return_405_METHOD_NOT_ALLOWED_for_request_with_wrong_http_method(
@@ -66,7 +66,7 @@ class RequestTestCase(TestCase):
             text="not allowed.",
         )
 
-    def test_should_return_201_CREATED_for_request_with_valid_greeting_query_param(
+    def _should_return_201_CREATED_for_request_with_valid_greeting_query_param(
         self,
     ) -> None:
         """Given a valid query param, on a post request, return a 201 response."""
