@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from greetings.models import Greeting
 from greetings.serializers import GreetingSerializer
 from greetings.utils.constants import CUSTOM_GOODBYE
-from greetings.utils.responses import CustomGreetingResponse
+from greetings.utils.responses import ErrorGreetingResponse, SuccessGreetingResponse
 from greetings.utils.services import GreetingService, RecursiveViewService
 from greetings.utils.validators import GreetingPathValidator
 
@@ -52,15 +52,10 @@ def validate_query_param(request: Request) -> str:
 
 
 def custom_greeting_response(custom_greeting, request) -> Response:
-    return CustomGreetingResponse(
+    return SuccessGreetingResponse(
       status_code=status.HTTP_201_CREATED,
-      message='Success',
-      description='Saved custom greeting submitted by user.',
       data={'greeting': custom_greeting, 'goodbye': request.query_params["greeting"]},)
 
 
 def custom_error_response(exception: Exception) -> Response:
-    return CustomGreetingResponse(
-      status_code=status.HTTP_400_BAD_REQUEST,
-      message='Error',
-      description='Failed to save custom greeting submitted by user.',)
+    return ErrorGreetingResponse(data={'exception': exception})
