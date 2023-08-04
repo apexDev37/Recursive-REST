@@ -52,19 +52,15 @@ def validate_query_param(request: Request) -> str:
 
 
 def custom_greeting_response(custom_greeting, request) -> Response:
-    data = CustomGreetingResponse(
+    return CustomGreetingResponse(
       status_code=status.HTTP_201_CREATED,
       message='Success',
       description='Saved custom greeting submitted by user.',
-      data={'greeting': custom_greeting, 'goodbye': request.query_params["greeting"]}
-    )
-    return Response(data.prepare(), status=status.HTTP_201_CREATED)
+      data={'greeting': custom_greeting, 'goodbye': request.query_params["greeting"]},)
 
 
 def custom_error_response(exception: Exception) -> Response:
-    data = CustomGreetingResponse(
+    return CustomGreetingResponse(
       status_code=status.HTTP_400_BAD_REQUEST,
       message='Error',
-      description='Failed to save custom greeting submitted by user.',
-    )
-    return Response(data.prepare(), status=status.HTTP_400_BAD_REQUEST)
+      description='Failed to save custom greeting submitted by user.',)
