@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from greetings.utils.constants import GreetingsPathConstants as path
-from greetings.utils.responses import CustomGreetingResponse, ErrorGreetingResponse
+from greetings.utils.responses import *
 
 
 BASE_MODULE = "greetings.views"
@@ -90,13 +90,24 @@ class RequestTestCase(TestCase):
             text="Saved custom greeting from user.",
         )
 
+
 class CustomResponseTestCase(APISimpleTestCase):
   """
   Test case to test custom wrapper response instances from DRF view.
   """
   
   def setUp(self) -> None:
-    pass
+    # Test data defined for all tests in single location
+    self.typeerror_msg = 'missing {0} required positional arguments'
+    self.error_defaults = {
+      'message': 'Error', 'description': 'Failed to save custom greeting submitted by user.'}
+    self.success_defaults = {
+      'message': 'Success', 'description': 'Saved custom greeting submitted by user.'}
+    self.test_data = {
+      'status_code': 200, 
+      'message': 'test message', 
+      'description': 'test description', 
+      'some-data-key': 'some_data_value'}
   
   def test_should_return_rest_frameworks_response_instance_to_client(self) -> None:
     # Given
@@ -109,9 +120,9 @@ class CustomResponseTestCase(APISimpleTestCase):
     # Then
     self.assertIsInstance(actual, expected)
 
-  def test_should_omit_data_from_json_response_if_not_provided(self) -> None:
+  def test_should_omit_data_from_json_response_if_param_not_provided(self) -> None:
     # Given
-    expected = 3
+    expected = count_required_params(CustomGreetingResponse)
 
     # When
     actual = CustomGreetingResponse(
@@ -121,46 +132,59 @@ class CustomResponseTestCase(APISimpleTestCase):
     self.assertEqual(len(actual.data), expected)
 
   def test_should_raise_exception_if_required_arguments_are_missing(self) -> None:
-    # # Get the signature of the constructor
-    # constructor = CustomGreetingResponse.__init__
-    # signature = inspect.signature(constructor)
-
-    # # Count the number of parameters without default values
-    # required_args_count = sum(
-    #     1 for param in signature.parameters.values()
-    #     if param.default in [inspect.Parameter.empty, None]
-    # )
-
+    # Given
+    required_params = count_required_params(CustomGreetingResponse)
+    
     # Then
     with self.assertRaisesMessage(
-      TypeError, 'required positional arguments'):
-      CustomGreetingResponse() # When
+      TypeError, self.typeerror_msg.format(required_params)):
+        CustomGreetingResponse() # When
     
-  def test_should_return_base_response_with_provided_actual_arguments(self) -> None:
+  def test_should_return_json_response_with_provided_actual_arguments(self) -> None:
     # Given
-    expected = {
-      'status_code': 200, 
-      'message': 'test message', 
-      'description': 'test description', 
-      'some-key': 'some_value'}
-
+    expected = self.test_data
+    
     actual = CustomGreetingResponse(
       status_code=expected['status_code'], 
       message=expected['message'], 
       description=expected['description'], 
-      data={'some-key': 'some_value'})
+      data={'some-data-key': 'some_data_value'})
     
     self.assertEqual(len(actual.data), len(expected))
     self.assertDictEqual(actual.data, expected)
 
   def test_should_return_error_default_values_on_non_provided_actual_arguments(self) -> None:
     # Given
-    expected = {'message': 'Error', 
-                'description': 'Failed to save custom greeting submitted by user.'}
-
+    expected = self.error_defaults
+    
     # When
     actual = ErrorGreetingResponse()
 
     self.assertEqual(actual.status_code, status.HTTP_400_BAD_REQUEST)
     self.assertEqual(actual.data['message'], expected['message'])
     self.assertEqual(actual.data['description'], expected['description'])
+
+  def test_should_return_success_default_values_on_non_provided_actual_arguments(self) -> None:
+    # Given
+    expected = self.success_defaults
+
+    # When
+    actual = SuccessGreetingResponse()
+
+    # Then
+    self.assertEqual(actual.status_code, status.HTTP_200_OK)
+    self.assertEqual(actual.data['message'], expected['message'])
+    self.assertEqual(actual.data['description'], expected['description'])
+
+
+# -------------------------------------------------------------------------------  
+# Test utility functions 
+# -------------------------------------------------------------------------------
+
+def count_required_params(cls: CustomGreetingResponse) -> int:
+  constructor = cls.__init__
+  signature = inspect.signature(constructor)
+  return sum(
+    1 for param in signature.parameters.values() 
+      if param.default == inspect.Parameter.empty 
+      and param.name != 'self')
