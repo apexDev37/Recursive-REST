@@ -117,3 +117,20 @@ class RecursiveTestCase(unittest.TestCase):
         mock_view.assert_called_once_with(self.initial_request)
         self.assertTrue(actual.environ.get("HTTP_AUTHORIZATION"))
         self.assertIn(expected, actual.headers)
+
+    @patch(f"{BASE_MODULE}.save_custom_greeting")
+    def test_should_make_recursive_view_call_with_custom_greeting_data(self, mock_view) -> None:
+      # Given
+      expected = {'key': 'greeting', 'value': self.query_param}
+
+      # When
+      self.under_test.make_recursive_call(self.query_param, self.initial_request)
+      actual = mock_view.call_args[0][0]
+
+      # Then
+      mock_view.assert_called_once()
+      self.assertTrue(actual.POST)
+      self.assertIn(expected['key'], actual.POST.keys())
+      self.assertEqual(len(actual.POST), 1)
+      self.assertIsInstance(actual.POST['greeting'], str)
+      self.assertEqual(actual.POST['greeting'], expected['value'])
