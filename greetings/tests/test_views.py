@@ -7,7 +7,7 @@ from rest_framework.test import APIClient, APISimpleTestCase
 from rest_framework import status
 from rest_framework.response import Response
 
-from greetings.utils.constants import GreetingsPathConstants as path
+from greetings.utils.constants import CUSTOM_GOODBYE, GreetingsPathConstants as path
 from greetings.utils.responses import *
 
 
@@ -89,6 +89,8 @@ class RequestTestCase(TestCase):
             status_code=status.HTTP_201_CREATED,
             text="Saved custom greeting from user.",
         )
+        self.assertNotEqual(response.data['greeting'], response.data['goodbye'])
+        self.assertEqual(response.data['goodbye'], CUSTOM_GOODBYE)
 
 
 class CustomResponseTestCase(APISimpleTestCase):

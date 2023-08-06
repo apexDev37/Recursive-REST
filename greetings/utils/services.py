@@ -47,6 +47,12 @@ class RecursiveViewService:
 
     @staticmethod
     def make_recursive_call(greeting: str, initial_request: Request) -> None:
+        """
+        @update Consider removing <greeting: str> parameter to mitigate risk
+                of user passing data inconsistent with request. Depend on
+                source of truth, <initial_request: Request>, for query param: greeting.
+        """
+        
         request = RecursiveViewService._update_query_param(greeting, initial_request)
         logger.debug("recursive call to api_view: views.save_custom_greeting.")
         return RecursiveViewService._call_view(request)
@@ -61,5 +67,6 @@ class RecursiveViewService:
     def _update_query_param(greeting: str, initial_request: Request) -> WSGIRequest:
         path: str = initial_request.build_absolute_uri()
         updated_path = path.replace(f"={greeting}", f"={CUSTOM_GOODBYE}", 1)
+        data = {'greeting': greeting}
         factory = RequestFactory()
-        return factory.post(path=updated_path)
+        return factory.post(path=updated_path, data=data)

@@ -1,6 +1,5 @@
 import logging
 
-from django.test import RequestFactory
 from oauth2_provider.decorators import protected_resource
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -35,27 +34,19 @@ def save_custom_greeting(request: Request) -> Response:
     try:
         custom_greeting = validate_query_param(request)
         if custom_greeting == CUSTOM_GOODBYE:
-            return custom_greeting_response(custom_greeting, request)
+            return SuccessGreetingResponse(
+              status_code=status.HTTP_201_CREATED,
+              data={'greeting': request.data['greeting'], 'goodbye': custom_greeting},)
 
         GreetingService.create_and_save(custom_greeting)
         return RecursiveViewService.make_recursive_call(custom_greeting, request)
 
     except Exception as exc:
         logger.warning("Error on saving custom greeting!", exc_info=exc)
-        return custom_error_response(exc)
+        return ErrorGreetingResponse(data={'detail': str(exc)})
 
 
 def validate_query_param(request: Request) -> str:
     GreetingPathValidator.validate_param_key_present(request)
     custom_greeting = request.query_params["greeting"]
     return custom_greeting
-
-
-def custom_greeting_response(custom_greeting, request) -> Response:
-    return SuccessGreetingResponse(
-      status_code=status.HTTP_201_CREATED,
-      data={'greeting': custom_greeting, 'goodbye': request.query_params["greeting"]},)
-
-
-def custom_error_response(exception: Exception) -> Response:
-    return ErrorGreetingResponse(data={'exception': exception})
