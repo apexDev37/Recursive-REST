@@ -6,7 +6,7 @@ send customizable JSON responses to client.
 from rest_framework import status
 from rest_framework.response import Response
 
-class CustomGreetingResponse(Response):
+class GreetingBaseResponse(Response):
   """
   Custom DTO class to define a general custom JSON response object.
   """
@@ -27,7 +27,7 @@ class CustomGreetingResponse(Response):
       **(data or {}),
     }
 
-class ErrorGreetingResponse(CustomGreetingResponse):
+class GreetingErrorResponse(GreetingBaseResponse):
   """
   Specialized wrapper class for a generic error `Response`.
   Use default values, if no arguments are passed to the class. 
@@ -47,7 +47,7 @@ class ErrorGreetingResponse(CustomGreetingResponse):
         description, 
         data)
 
-class SuccessGreetingResponse(CustomGreetingResponse):
+class GreetingSuccessResponse(GreetingBaseResponse):
   """
   Specialized wrapper class for a generic success `Response`.
   

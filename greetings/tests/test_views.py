@@ -116,7 +116,7 @@ class CustomResponseTestCase(APISimpleTestCase):
     expected = Response
 
     # When
-    actual = CustomGreetingResponse(
+    actual = GreetingBaseResponse(
       status_code=200, message='test message', description='test description')
     
     # Then
@@ -124,10 +124,10 @@ class CustomResponseTestCase(APISimpleTestCase):
 
   def test_should_omit_data_from_json_response_if_param_not_provided(self) -> None:
     # Given
-    expected = count_required_params(CustomGreetingResponse)
+    expected = count_required_params(GreetingBaseResponse)
 
     # When
-    actual = CustomGreetingResponse(
+    actual = GreetingBaseResponse(
       status_code=200, message='test message', description='test description',)
     
     # Then
@@ -135,18 +135,18 @@ class CustomResponseTestCase(APISimpleTestCase):
 
   def test_should_raise_exception_if_required_arguments_are_missing(self) -> None:
     # Given
-    required_params = count_required_params(CustomGreetingResponse)
+    required_params = count_required_params(GreetingBaseResponse)
     
     # Then
     with self.assertRaisesMessage(
       TypeError, self.typeerror_msg.format(required_params)):
-        CustomGreetingResponse() # When
+        GreetingBaseResponse() # When
     
   def test_should_return_json_response_with_provided_actual_arguments(self) -> None:
     # Given
     expected = self.test_data
     
-    actual = CustomGreetingResponse(
+    actual = GreetingBaseResponse(
       status_code=expected['status_code'], 
       message=expected['message'], 
       description=expected['description'], 
@@ -160,7 +160,7 @@ class CustomResponseTestCase(APISimpleTestCase):
     expected = self.error_defaults
     
     # When
-    actual = ErrorGreetingResponse()
+    actual = GreetingErrorResponse()
 
     self.assertEqual(actual.status_code, status.HTTP_400_BAD_REQUEST)
     self.assertEqual(actual.data['message'], expected['message'])
@@ -171,7 +171,7 @@ class CustomResponseTestCase(APISimpleTestCase):
     expected = self.success_defaults
 
     # When
-    actual = SuccessGreetingResponse()
+    actual = GreetingSuccessResponse()
 
     # Then
     self.assertEqual(actual.status_code, status.HTTP_200_OK)
@@ -183,7 +183,7 @@ class CustomResponseTestCase(APISimpleTestCase):
 # Test utility functions 
 # -------------------------------------------------------------------------------
 
-def count_required_params(cls: CustomGreetingResponse) -> int:
+def count_required_params(cls: GreetingBaseResponse) -> int:
   constructor = cls.__init__
   signature = inspect.signature(constructor)
   return sum(
