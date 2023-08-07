@@ -39,7 +39,7 @@ def save_custom_greeting(request: Request) -> Response:
               data={'greeting': request.data['greeting'], 'goodbye': custom_greeting},)
 
         GreetingService.create_and_save(custom_greeting)
-        return RecursiveViewService.make_recursive_call(custom_greeting, request)
+        return RecursiveViewService.make_recursive_call(request)
 
     except Exception as exc:
         logger.warning("Error on saving custom greeting!", exc_info=exc)

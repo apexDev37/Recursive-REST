@@ -8,12 +8,12 @@ throughout an application.
 """
 
 import logging
-from typing import Self
+from typing import Any, Self
 
 from django.core.handlers.wsgi import WSGIRequest
-from django.test import RequestFactory
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.test import APIRequestFactory
 
 from greetings.auth.services import OAuth2CredentialsService
 from greetings.models import Greeting
@@ -43,30 +43,41 @@ class GreetingService:
 class RecursiveViewService:
     """
     Service to encapsulate logic for making a recursive view call.
+    
+    Behavior:: 
+      Receives an rest_framework `Request` instance argument.
+      Prepares a `HttpRequest` instance to be passed to given view.
+      Updates the query_param to a constant custom_goodbye `string`.
+      Authorizes the request to authenticate with OAuth2 layer.
+      Returns a view with a prepared `WSGIRequest` instance argument. 
     """
 
     @staticmethod
-    def make_recursive_call(greeting: str, initial_request: Request) -> None:
-        """
-        @update Consider removing <greeting: str> parameter to mitigate risk
-                of user passing data inconsistent with request. Depend on
-                source of truth, <initial_request: Request>, for query param: greeting.
-        """
-        
-        request = RecursiveViewService._update_query_param(greeting, initial_request)
-        logger.debug("recursive call to api_view: views.save_custom_greeting.")
+    def make_recursive_call(initial_request: Request) -> None:        
+        request = RecursiveViewService._prepare_request(initial_request)
+        request = RecursiveViewService._authenticate_and_authorize(request)
         return RecursiveViewService._call_view(request)
 
+    def _prepare_request(request: Request) -> WSGIRequest:
+        request = RecursiveViewService._get_request_data(request)
+        factory = APIRequestFactory(format='json')
+        return factory.post(
+          path=request['path'], data=request['data'], QUERY_STRING=request['param'])
+
+    def _get_request_data(request: Request) -> dict[str, Any]:
+      initial_greeting = request.query_params['greeting']
+      data = {'greeting': initial_greeting}
+      goodbye = 'greeting={0}'.format(CUSTOM_GOODBYE)
+      return {'path': request.path, 'data': data, 'param': goodbye}      
+    
+    def _authenticate_and_authorize(request: WSGIRequest) -> WSGIRequest:
+      oauth_service = OAuth2CredentialsService()
+      request = oauth_service.authorize_request(request)
+      return request
+
     def _call_view(request: WSGIRequest) -> Response:
+        # Method-import to prevent circular dependency error
         from greetings.views import save_custom_greeting
 
-        oauth_service = OAuth2CredentialsService()
-        request = oauth_service.authorize_request(request)
+        logger.debug("recursive call to api_view: views.save_custom_greeting.")
         return save_custom_greeting(request)
-
-    def _update_query_param(greeting: str, initial_request: Request) -> WSGIRequest:
-        path: str = initial_request.build_absolute_uri()
-        updated_path = path.replace(f"={greeting}", f"={CUSTOM_GOODBYE}", 1)
-        data = {'greeting': greeting}
-        factory = RequestFactory()
-        return factory.post(path=updated_path, data=data)
