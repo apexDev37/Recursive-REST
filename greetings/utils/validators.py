@@ -6,17 +6,22 @@ from rest_framework.request import Request
 from greetings.utils.constants import GreetingsPathConstants as path
 
 
-class GreetingPathValidator:
+class GreetingParamValidator:
     """
-    Validator class to ensure that a required param key
-    is present in the request path.
+    Custom validator class to validate that given request URL
+    has the query parameter key (`?greeting=`) for a custom greeting.
+    
+    Behavior::
+      Check if `greeting` query param key is in request URL.
+      Raise `exception` if query param key is not found in URL.
+      Return the `greeting` query param value if key is found in URL.
     """
 
-    @staticmethod
-    def validate_param_key_present(request: Request) -> None:
-        url_path = request.build_absolute_uri()
-        if str(path.GREETING_PARAM_KEY) not in url_path:
-            raise ValueError("Key for required query param: greeting is missing.")
+    def __new__(self, request: Request) -> str:
+      url = request.build_absolute_uri()
+      if str(path.GREETING_PARAM_KEY) not in url:
+        raise ValueError("Required query param key `greeting` is missing in URL.")
+      return request.query_params['greeting']
 
 
 class AlphaCharsValidator:
