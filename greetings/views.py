@@ -31,11 +31,12 @@ def save_custom_greeting(request: Request) -> Response:
         custom_greeting = GreetingParamValidator(request)
         if custom_greeting == CUSTOM_GOODBYE:
             return GreetingSuccessResponse(
-              status_code=status.HTTP_201_CREATED,
-              data={'greeting': request.data['greeting'], 'goodbye': custom_greeting},)
+                status_code=status.HTTP_201_CREATED,
+                data={"greeting": request.data["greeting"], "goodbye": custom_greeting},
+            )
 
         GreetingService.create_and_save(custom_greeting)
         return RecursiveViewService.make_recursive_call(request)
 
     except Exception as exc:
-        return GreetingErrorResponse(data={'detail': str(exc)})
+        return GreetingErrorResponse(data={"detail": str(exc)})

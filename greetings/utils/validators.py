@@ -10,7 +10,7 @@ class GreetingParamValidator:
     """
     Custom validator class to validate that given request URL
     has the query parameter key (`?greeting=`) for a custom greeting.
-    
+
     Behavior::
       Check if `greeting` query param key is in request URL.
       Raise `exception` if query param key is not found in URL.
@@ -18,10 +18,10 @@ class GreetingParamValidator:
     """
 
     def __new__(self, request: Request) -> str:
-      url = request.build_absolute_uri()
-      if str(path.GREETING_PARAM_KEY) not in url:
-        raise ValueError("Required query param key `greeting` is missing in URL.")
-      return request.query_params['greeting']
+        url = request.build_absolute_uri()
+        if str(path.GREETING_PARAM_KEY) not in url:
+            raise ValueError("Required query param key `greeting` is missing in URL.")
+        return request.query_params["greeting"]
 
 
 class AlphaCharsValidator:

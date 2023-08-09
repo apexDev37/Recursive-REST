@@ -10,7 +10,7 @@ from greetings.utils.constants import CUSTOM_GOODBYE
 from greetings.utils.services import RecursiveViewService
 
 BASE_MODULE = "greetings.views"
-DRF_VIEW = 'save_custom_greeting'
+DRF_VIEW = "save_custom_greeting"
 
 
 class RecursiveTestCase(unittest.TestCase):
@@ -21,7 +21,6 @@ class RecursiveTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.under_test = RecursiveViewService
         self.initial_request = prepare_initial_request()
-
 
     def test_should_log_debug_alert_message_when_making_recursive_call(self) -> None:
         # Given
@@ -83,8 +82,8 @@ class RecursiveTestCase(unittest.TestCase):
         actual: str = request.META["QUERY_STRING"]
 
         # Then
-        self.assertEqual(actual.split('=')[0], expected['key'])
-        self.assertEqual(actual.split('=')[1], expected['value'])
+        self.assertEqual(actual.split("=")[0], expected["key"])
+        self.assertEqual(actual.split("=")[1], expected["value"])
 
     @patch(f"{BASE_MODULE}.{DRF_VIEW}")
     def test_should_make_recursive_view_call_with_authorized_request_argument(
@@ -104,40 +103,44 @@ class RecursiveTestCase(unittest.TestCase):
         self.assertIn(expected, actual.headers)
 
     @patch(f"{BASE_MODULE}.{DRF_VIEW}")
-    def test_should_make_recursive_view_call_with_custom_greeting_data(self, mock_view) -> None:
-      # Given
-      request = self.initial_request
-      expected: dict = get_query_param(request)
+    def test_should_make_recursive_view_call_with_custom_greeting_data(
+        self, mock_view
+    ) -> None:
+        # Given
+        request = self.initial_request
+        expected: dict = get_query_param(request)
 
-      # When
-      self.under_test.make_recursive_call(request)
-      actual = mock_view.call_args[0][0]
+        # When
+        self.under_test.make_recursive_call(request)
+        actual = mock_view.call_args[0][0]
 
-      # Then
-      mock_view.assert_called_once()
-      self.assertTrue(actual.POST)
-      self.assertIn(expected['key'], actual.POST.keys())
-      self.assertIsInstance(actual.POST['greeting'], str)
-      self.assertEqual(actual.POST['greeting'], expected['value'])
+        # Then
+        mock_view.assert_called_once()
+        self.assertTrue(actual.POST)
+        self.assertIn(expected["key"], actual.POST.keys())
+        self.assertIsInstance(actual.POST["greeting"], str)
+        self.assertEqual(actual.POST["greeting"], expected["value"])
 
 
-# -------------------------------------------------------------------------------  
-# Test utility functions 
+# -------------------------------------------------------------------------------
+# Test utility functions
 # -------------------------------------------------------------------------------
 
-def prepare_initial_request() -> Request:
-  """ 
-  Create and mimic request passed to service from view.
-  NB: Should be instance of `rest_framework.request.Request`
-  """
 
-  factory = APIRequestFactory()  
-  url = reverse('greetings:save_custom_greeting')
-  request = factory.post(path=url, QUERY_STRING="greeting=tests", format='json')
-  return Request(request=request)
+def prepare_initial_request() -> Request:
+    """
+    Create and mimic request passed to service from view.
+    NB: Should be instance of `rest_framework.request.Request`
+    """
+
+    factory = APIRequestFactory()
+    url = reverse("greetings:save_custom_greeting")
+    request = factory.post(path=url, QUERY_STRING="greeting=tests", format="json")
+    return Request(request=request)
+
 
 def get_query_param(request: Request, greeting: str = None) -> dict:
-  query_param: str = request.META['QUERY_STRING']
-  key = query_param.split('=')[0]
-  value = query_param.split('=')[1] if greeting == None else greeting
-  return {'key': key, 'value': value}
+    query_param: str = request.META["QUERY_STRING"]
+    key = query_param.split("=")[0]
+    value = query_param.split("=")[1] if greeting == None else greeting
+    return {"key": key, "value": value}
