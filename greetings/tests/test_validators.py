@@ -1,12 +1,14 @@
 from unittest import TestCase
 from django.urls import reverse
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIRequestFactory
 from rest_framework.request import Request
 
 from greetings.utils.validators import GreetingParamValidator
+from greetings.utils.validators import AlphaCharsValidator
 
 
-class ValidatorsTestCase(TestCase):
+class CustomValidatorTestCase(TestCase):
   """
   Test case to test all custom validators for `greetings` app
   """
@@ -36,6 +38,17 @@ class ValidatorsTestCase(TestCase):
     self.assertTrue(request.META['QUERY_STRING'])
     self.assertIsInstance(actual, str)
     self.assertEqual(actual, expected)
+
+  def test_should_raise_exception_for_string_with_non_alphabetic_chars(self) -> None:
+    # Given
+    greeting = '$_greeting37'
+    expected = ValidationError
+    validator = AlphaCharsValidator()
+    
+    # Then
+    self.assertIsInstance(greeting, str)
+    with self.assertRaises(expected):
+      validator(value=greeting)
 
 
 # -------------------------------------------------------------------------------  
