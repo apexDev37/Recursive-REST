@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 
 from greetings.utils.constants import GreetingsPathConstants as path
+from greetings.utils.exceptions import RequiredParamMissing
 
 
 class GreetingParamValidator:
@@ -20,7 +21,7 @@ class GreetingParamValidator:
     def __new__(self, request: Request) -> str:
         url = request.build_absolute_uri()
         if str(path.GREETING_PARAM_KEY) not in url:
-            raise ValueError("Required query param key `greeting` is missing in URL.")
+            raise RequiredParamMissing("Required query param key `greeting` is missing in URL.")
         return request.query_params["greeting"]
 
 

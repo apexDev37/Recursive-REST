@@ -4,6 +4,7 @@ from django.urls import reverse
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 from rest_framework.test import APIRequestFactory
+from greetings.utils.exceptions import RequiredParamMissing
 
 from greetings.utils.validators import AlphaCharsValidator, GreetingParamValidator
 
@@ -21,7 +22,7 @@ class CustomValidatorTestCase(TestCase):
     ) -> None:
         # Given
         request = prepare_request(greeting=None)
-        expected = ValueError
+        expected = RequiredParamMissing
 
         # Then
         self.assertFalse(request.META["QUERY_STRING"])
