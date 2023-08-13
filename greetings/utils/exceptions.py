@@ -7,6 +7,23 @@ from rest_framework.exceptions import APIException
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
+from greetings.utils.responses import GreetingErrorResponse
+
+
+# -------------------------------------------------------------------------------
+# Custom DRF Exceptions
+# -------------------------------------------------------------------------------
+
+class RequiredParamMissing(APIException):
+  """
+  Custom `APIException` raised when a client request does not 
+  include required `greeting` param.
+  """
+  
+  status_code = 400
+  default_detail = 'Required query param key is missing in URL.'
+  default_code = 'required_param_missing'
+
 
 # -------------------------------------------------------------------------------
 # Custom DRF Exception Handler
@@ -20,7 +37,10 @@ def custom_exception_handler(exc: APIException, context: dict) -> Response:
   if response is None:
     # If DRF's default response is not generated, handle custom exception
     
-    if isinstance(exc, APIException):
-      return Response()
+    if isinstance(exc, RequiredParamMissing):
+      return GreetingErrorResponse(
+        status_code=exc.status_code,
+        message=exc.get_codes(),
+        description=str(exc.detail))
 
   return response   # Return the DRF-generated response if applicable
