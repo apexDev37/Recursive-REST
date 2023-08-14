@@ -32,15 +32,21 @@ class RequiredParamMissing(APIException):
 def custom_exception_handler(exc: APIException, context: dict) -> Response:
   # Call REST framework's default exception handler first,
   # to get the standard error response.
-  response = exception_handler(exc, context)
-  
-  if response is None:
-    # If DRF's default response is not generated, handle custom exception
-    
-    if isinstance(exc, RequiredParamMissing):
-      return GreetingErrorResponse(
-        status_code=exc.status_code,
-        message=exc.get_codes(),
-        description=str(exc.detail))
+  # response = exception_handler(exc, context)
 
-  return response   # Return the DRF-generated response if applicable
+  if isinstance(exc, APIException):
+    return GreetingErrorResponse(
+      status_code=exc.status_code,
+      message=exc.default_code,
+      description=str(exc.detail))
+  
+  # if response is None:
+  #   # If DRF's default response is not generated, handle custom exception
+    
+  #   if isinstance(exc, RequiredParamMissing):
+  #     return GreetingErrorResponse(
+  #       status_code=exc.status_code,
+  #       message=exc.get_codes(),
+  #       description=str(exc.detail))
+
+  return exception_handler(exc, context)   # Return the DRF-generated response if applicable
