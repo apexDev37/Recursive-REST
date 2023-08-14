@@ -48,7 +48,7 @@ class RequestTestCase(TestCase):
         self.assertContains(
             response,
             status_code=status.HTTP_400_BAD_REQUEST,
-            text="Failed to save custom greeting submitted by user.",
+            text="Required query param",
         )
 
     def test_should_return_405_METHOD_NOT_ALLOWED_for_request_with_wrong_http_method(
@@ -62,7 +62,6 @@ class RequestTestCase(TestCase):
 
         # When
         response = self.client.generic(method=not_allowed, path=url)
-        error_detail = response.data["detail"]
 
         # Then
         self.assertIsInstance(response, Response)
