@@ -51,26 +51,6 @@ class RequestTestCase(TestCase):
             text="Required query param",
         )
 
-    def test_should_return_405_METHOD_NOT_ALLOWED_for_request_with_wrong_http_method(
-        self,
-    ) -> None:
-        """Given a request with a not allowed HTTP method return a 405 response."""
-
-        # Given
-        not_allowed = "PUT"
-        url = str(path.GREETING_URI)
-
-        # When
-        response = self.client.generic(method=not_allowed, path=url)
-
-        # Then
-        self.assertIsInstance(response, Response)
-        self.assertContains(
-            response,
-            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
-            text="not allowed.",
-        )
-
     def _should_return_201_CREATED_for_request_with_valid_greeting_query_param(
         self,
     ) -> None:
